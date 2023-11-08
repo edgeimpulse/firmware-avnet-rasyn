@@ -1,0 +1,6 @@
+/Debug/*
+!/Debug/memory_regions.ld
+/Release
+/.settings
+
+*.launch

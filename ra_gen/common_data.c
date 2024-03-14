@@ -88,6 +88,11 @@ StaticQueue_t g_new_state_queue_memory;
 uint8_t g_new_state_queue_queue_memory[2 * 20];
 #endif
 void rtos_startup_err_callback(void *p_instance, void *p_data);
+SemaphoreHandle_t g_sd_mutex;
+#if 1
+StaticSemaphore_t g_sd_mutex_memory;
+#endif
+void rtos_startup_err_callback(void *p_instance, void *p_data);
 void g_common_init(void)
 {
     g_ndp_event_group =
@@ -181,5 +186,23 @@ void g_common_init(void)
     if (NULL == g_new_state_queue)
     {
         rtos_startup_err_callback (g_new_state_queue, 0);
+    }
+    g_sd_mutex =
+#if 0
+                #if 1
+                xSemaphoreCreateRecursiveMutexStatic(&g_sd_mutex_memory);
+                #else
+                xSemaphoreCreateRecursiveMutex();
+                #endif
+                #else
+#if 1
+            xSemaphoreCreateMutexStatic (&g_sd_mutex_memory);
+#else
+                xSemaphoreCreateMutex();
+                #endif
+#endif
+    if (NULL == g_sd_mutex)
+    {
+        rtos_startup_err_callback (g_sd_mutex, 0);
     }
 }

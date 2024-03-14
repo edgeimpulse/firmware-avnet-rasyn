@@ -24,30 +24,36 @@ char dsp_file_name[64] = { DSP_FILE_NAME };
 char model_file_name[64] = { MODEL_FILE_NAME };
 
 struct config_ini_items config_items ={  /* default settings */
-		.button_switch = {"audio"},
-		.led_event_color = {  \
-				LED_COLOR_YELLOW,  \
-				LED_COLOR_CYAN, \
-				LED_COLOR_MAGENTA, \
-				LED_COLOR_RED, \
-				LED_COLOR_GREEN, \
-				LED_EVENT_NONE },
+        .button_switch = {"audio"},
+        .led_event_color = {  \
+                LED_COLOR_YELLOW,  \
+                LED_COLOR_CYAN, \
+                LED_COLOR_MAGENTA, \
+                LED_COLOR_RED, \
+                LED_COLOR_GREEN, \
+                LED_EVENT_NONE },
 
-		.recording_period = 10,
-		.imu_write_to_file = IMU_FUNC_ENABLE,
-		.imu_print_to_terminal = IMU_FUNC_DISABLE,
-		.low_power_mode = DOWN_DOWN_LP_MODE,
-		.ble_mode = BLE_ENABLE,
+        .recording_period = 10,
+        .imu_write_to_file = IMU_FUNC_ENABLE,
+        .imu_print_to_terminal = IMU_FUNC_DISABLE,
+        .low_power_mode = DOWN_DOWN_LP_MODE,
+        .ble_mode = BLE_ENABLE,
 
-	    .cert_location = LOAD_CERTS_USE_DA16600_CERTS,
-		.target_cloud = CLOUD_NONE,
+        .cert_location = LOAD_CERTS_USE_DA16600_CERTS,
+        .target_cloud = CLOUD_NONE,
         .wifi_config = USE_RENESAS_TOOL_FOR_CONFIG,
-		.wifi_ap_name = {0},
-		.wifi_passwd = {0},
-		.wifi_cc = {0},
-		.iotc_uid = {0},
-		.iotc_cpid = {0},
-		.iotc_env = {0},
+        .wifi_ap_name = {0},
+        .wifi_passwd = {0},
+        .wifi_cc = {0},
+        .iotc_uid = {0},
+        .iotc_cpid = {0},
+        .iotc_env = {0},
+        .ble_name = {0},
+        .ntp_time_server = {0},
+        .aws_endpoint = {0},
+        .aws_device_id = {0},
+        .aws_pub_topic = {0},
+        .aws_sub_topic = {0},
 };
 
 /* Local global variables */
@@ -87,24 +93,24 @@ int binary_loading(char * file_name)
     sprintf(path, "0:/");
     strcat(path, file_name);
 
-    //printf("Loading %s\r\n",path);
+    printf("Loading %s\r\n",path);
 
     // mount
     res = f_mount(&fatfs_obj, "", 1);
     if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
+        printf("f_mount fail %d\r\n",res);
     }
 
 #if 0
     res = f_stat(path, &fno);
     if(res != FR_OK){
-        //printf("f_stat fail %d\r\n",res);
+        printf("f_stat fail %d\r\n",res);
     }else{
-        //printf("Size: %lu\r\n", fno.fsize);
-        //printf("Timestamp: %u-%02u-%02u, %02u:%02u\r\n",
+        printf("Size: %lu\r\n", fno.fsize);
+        printf("Timestamp: %u-%02u-%02u, %02u:%02u\r\n",
                (fno.fdate >> 9) + 1980, fno.fdate >> 5 & 15, fno.fdate & 31,
                fno.ftime >> 11, fno.ftime >> 5 & 63);
-        //printf("Attributes: %c%c%c%c%c\r\n",
+        printf("Attributes: %c%c%c%c%c\r\n",
                (fno.fattrib & AM_DIR) ? 'D' : '-',
                (fno.fattrib & AM_RDO) ? 'R' : '-',
                (fno.fattrib & AM_HID) ? 'H' : '-',
@@ -116,22 +122,22 @@ int binary_loading(char * file_name)
 
     res = f_open(&fil, path, FA_READ);
     if(res != FR_OK){
-        //printf("f_open fail %d\r\n",res);
+        printf("f_open fail %d\r\n",res);
     }
 
-    //printf("%d bytes\r\n", f_size(&fil));
+    printf("%d bytes\r\n", f_size(&fil));
 
 
     res =  f_close(&fil);
     if(res != FR_OK){
-        //printf("f_close fail %d\r\n",res);
+        printf("f_close fail %d\r\n",res);
     }
 
 
     // unmount
     res = f_mount(NULL, "", 0);
     if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
+        printf("f_mount umount fail %d\r\n",res);
     }
 
     return res;
@@ -150,12 +156,12 @@ uint32_t get_synpkg_size(char * file_name)
     // mount
     res = f_mount(&fatfs_obj, "", 1);
     if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
+        printf("f_mount fail %d\r\n",res);
     }
 
     res = f_open(&fil, path, FA_READ);
     if(res != FR_OK){
-        //printf("f_open fail %d\r\n",res);
+        printf("f_open fail %d\r\n",res);
         return size;
     }
 
@@ -163,13 +169,13 @@ uint32_t get_synpkg_size(char * file_name)
 
     res =  f_close(&fil);
     if(res != FR_OK){
-        //printf("f_close fail %d\r\n",res);
+        printf("f_close fail %d\r\n",res);
     }
 
     // unmount
     res = f_mount(NULL, "", 0);
     if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
+        printf("f_mount umount fail %d\r\n",res);
     }
 
     return size;
@@ -188,36 +194,36 @@ uint32_t read_synpkg_block(char * file_name, uint32_t offset, uint8_t *buff,  ui
     // mount
     res = f_mount(&fatfs_obj, "", 1);
     if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
+        printf("f_mount fail %d\r\n",res);
         return res;
     }
 
     res = f_open(&fil, path, FA_READ);
     if(res != FR_OK){
-        //printf("f_open fail %d\r\n",res);
+        printf("f_open fail %d\r\n",res);
         return res;
     }
 
     res = f_lseek(&fil, offset);
     if(res != FR_OK){
-        //printf("f_lseek fail %d\r\n",res);
+        printf("f_lseek fail %d\r\n",res);
         return res;
     }
     res = f_read(&fil, buff, split_len, &br);
     if(res != FR_OK){
-        //printf("f_read fail %d\r\n",res);
+        printf("f_read fail %d\r\n",res);
         return res;
     }
 
     res =  f_close(&fil);
     if(res != FR_OK){
-        //printf("f_close fail %d\r\n",res);
+        printf("f_close fail %d\r\n",res);
     }
 
     // unmount
     res = f_mount(NULL, "", 0);
     if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
+        printf("f_mount umount fail %d\r\n",res);
     }
     return br;
 }
@@ -247,71 +253,71 @@ uint32_t cat_file(char * src_file, char * dst_file, int flag)
     FRESULT res;
     FIL fil_rd, fil_wr;
     char path[64];
-	uint8_t buffer[512];
+    uint8_t buffer[512];
     uint32_t br, bw;
 
     res = f_mount(&fatfs_obj, "", 1);
     if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
+        printf("f_mount fail %d\r\n",res);
         return res;
     }
 
-	/* open src file to read */
-	memset(path, 0, sizeof(path));
-	sprintf(path, "0:/%s", src_file);
-	res = f_open(&fil_rd, path, FA_READ);
-	if(res != FR_OK){
-		//printf("f_open fail %d\r\n",res);
-		return res;
-	}
+    /* open src file to read */
+    memset(path, 0, sizeof(path));
+    sprintf(path, "0:/%s", src_file);
+    res = f_open(&fil_rd, path, FA_READ);
+    if(res != FR_OK){
+        printf("f_open fail %d\r\n",res);
+        return res;
+    }
 
-	/* open src file to read */
-	memset(path, 0, sizeof(path));
-	sprintf(path, "0:/%s", dst_file);
-	if ( flag == 0) {
-		/* create a new file */
-		res = f_open(&fil_wr, path, FA_CREATE_ALWAYS | FA_WRITE);
-	} else {
-		/* append data to file */
-		res = f_open(&fil_wr, path, FA_OPEN_APPEND | FA_WRITE);
-	}
-	if(res != FR_OK){
-		//printf("f_open fail %d\r\n",res);
-		return res;
-	}
+    /* open src file to read */
+    memset(path, 0, sizeof(path));
+    sprintf(path, "0:/%s", dst_file);
+    if ( flag == 0) {
+        /* create a new file */
+        res = f_open(&fil_wr, path, FA_CREATE_ALWAYS | FA_WRITE);
+    } else {
+        /* append data to file */
+        res = f_open(&fil_wr, path, FA_OPEN_APPEND | FA_WRITE);
+    }
+    if(res != FR_OK){
+        printf("f_open fail %d\r\n",res);
+        return res;
+    }
 
-	/* Copy source to destination */
+    /* Copy source to destination */
     while (1) {
-		res = f_read(&fil_rd, buffer, sizeof(buffer), &br); 
-		if(res != FR_OK){
-			//printf("f_read fail %d\r\n",res);
-			return res;
-		}
+        res = f_read(&fil_rd, buffer, sizeof(buffer), &br);
+        if(res != FR_OK){
+            printf("f_read fail %d\r\n",res);
+            return res;
+        }
 
         if (br == 0)
-			break; /* error or eof */
+            break; /* error or eof */
 
         res = f_write(&fil_wr, buffer, br, &bw);
-		if(res != FR_OK){
-			//printf("f_write fail %d\r\n",res);
-			return res;
-		}
+        if(res != FR_OK){
+            printf("f_write fail %d\r\n",res);
+            return res;
+        }
         if (bw < br)
-			break; /* error or disk full */
+            break; /* error or disk full */
     }
 
     res =  f_close(&fil_rd);
     if(res != FR_OK){
-        //printf("f_close fail %d\r\n",res);
+        printf("f_close fail %d\r\n",res);
     }
     res =  f_close(&fil_wr);
     if(res != FR_OK){
-        //printf("f_close fail %d\r\n",res);
+        printf("f_close fail %d\r\n",res);
     }
 
     res = f_unmount("");
     if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
+        printf("f_mount umount fail %d\r\n",res);
     }
     return bw;
 }
@@ -325,25 +331,24 @@ uint32_t remove_file(char * file_name)
 
     res = f_mount(&fatfs_obj, "", 1);
     if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
+        printf("f_mount fail %d\r\n",res);
         return res;
     }
 
-	/* delete file */
-	res = f_unlink(path);
-	if(res != FR_OK){
-		//printf("f_unlink fail %d\r\n",res);
-		return res;
-	}
+    /* delete file */
+    res = f_unlink(path);
+    if(res != FR_OK){
+        printf("f_unlink fail %d\r\n",res);
+        return res;
+    }
 
   res = f_unmount("");
     if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
+        printf("f_mount umount fail %d\r\n",res);
     }
     return res;
 }
 
-#if 1
 uint32_t write_wav_file(char * file_name, uint8_t *buff,  uint32_t len,  int header)
 {
     FRESULT res;
@@ -355,10 +360,11 @@ uint32_t write_wav_file(char * file_name, uint8_t *buff,  uint32_t len,  int hea
     if (!fatfs_mounted) {
         res = f_mount(&fatfs_obj, "", 1);
         if(res != FR_OK){
-            //printf("f_mount fail %d\r\n",res);
+            printf("f_mount fail %d\r\n",res);
             return res;
         }
         fatfs_mounted = 1;
+        printf("mount fs\n");
     }
     
     if ( header == 1 ) {
@@ -372,20 +378,20 @@ uint32_t write_wav_file(char * file_name, uint8_t *buff,  uint32_t len,  int hea
         }
     }
     if(res != FR_OK){
-        //printf("f_open fail %d\r\n",res);
+        printf("f_open fail %d\r\n",res);
         return res;
     }
 
     res = f_write(&extract_file_fil, buff, len, &bw);
     if(res != FR_OK){
-        //printf("f_write fail %d\r\n",res);
+        printf("f_write fail %d\r\n",res);
         return res;
     }
 
     if ( header == 1 ) {
         res =  f_close(&extract_file_fil);
         if(res != FR_OK){
-            //printf("f_close fail %d\r\n",res);
+            printf("f_close fail %d\r\n",res);
         }
         extract_file_opened = 0;
     } 
@@ -404,54 +410,57 @@ uint32_t write_sensor_file(char * file_name, uint32_t sample_size,
 
     sprintf(path, "0:/%s", file_name);
 
-    res = f_mount(&fatfs_obj, "", 1);
-    if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
-        return res;
+    if (!fatfs_mounted) {
+        res = f_mount(&fatfs_obj, "", 1);
+        if(res != FR_OK){
+            printf("f_mount fail %d\r\n",res);
+            return res;
+        }
+        fatfs_mounted = 1;
     }
 
-	if ( header == 1 ) {
-		/* create a new file */
-		res = f_open(&extract_file_fil, path, FA_CREATE_ALWAYS | FA_WRITE);
-	} else {
-		/* append data to file */
+    if ( header == 1 ) {
+        /* create a new file */
+        res = f_open(&extract_file_fil, path, FA_CREATE_ALWAYS | FA_WRITE);
+    } else {
+        /* append data to file */
         if (!extract_file_opened) {
             res = f_open(&extract_file_fil, path, FA_OPEN_APPEND | FA_WRITE);
             if (res == FR_OK) extract_file_opened = 1;
         }
-	}
-	if(res != FR_OK){
-		//printf("f_open fail %d\r\n",res);
-		return res;
-	}
+    }
+    if(res != FR_OK){
+        printf("f_open fail %d\r\n",res);
+        return res;
+    }
 
-	if ( header == 1 ) {
-		strcpy(buff, "Acc_x,Acc_y,Acc_z,Gyro_x,Gyro_y,Gyro_z\n");
-		buff_len = strlen(buff);
-	}
+    if ( header == 1 ) {
+        strcpy(buff, "Acc_x,Acc_y,Acc_z,Gyro_x,Gyro_y,Gyro_z\n");
+        buff_len = strlen(buff);
+    }
     else {
         uint32_t buff_offset = 0;
 
         for (int i = 0; i < sample_size / 2; i++) {
-			buff_offset += snprintf(&buff[buff_offset], 128,
+            buff_offset += snprintf(&buff[buff_offset], 128,
                     "%d,", acc_samples[i]);
         }
-		buff_offset --; //Truncate the last comma in each line
-		buff_offset += snprintf(&buff[buff_offset], 128,"\r\n");
+        buff_offset --; //Truncate the last comma in each line
+        buff_offset += snprintf(&buff[buff_offset], 128,"\r\n");
 
         buff_len = buff_offset;
     }
 
     res = f_write(&extract_file_fil, buff, buff_len, &bw);
     if(res != FR_OK){
-        //printf("f_write fail %d\r\n",res);
+        printf("f_write fail %d\r\n",res);
         return res;
     }
 
     if ( header == 1 ) {
         res =  f_close(&extract_file_fil);
         if(res != FR_OK){
-            //printf("f_close fail %d\r\n",res);
+            printf("f_close fail %d\r\n",res);
         }
         extract_file_opened = 0;
     } 
@@ -466,7 +475,7 @@ void write_extraction_file_end(void)
     if (extract_file_opened) {
         res =  f_close(&extract_file_fil);
         if(res != FR_OK){
-            //printf("f_close fail %d\r\n",res);
+            printf("f_close fail %d\r\n",res);
         }
         extract_file_opened = 0;
     }
@@ -474,123 +483,11 @@ void write_extraction_file_end(void)
     if (fatfs_mounted) {
         res = f_mount(NULL, "", 0);
         if(res != FR_OK){
-            //printf("f_mount umount fail %d\r\n",res);
+            printf("f_mount umount fail %d\r\n",res);
         }
         fatfs_mounted = 0;
     }
 }
-#else
-
-uint32_t write_wav_file(char * file_name, uint8_t *buff,  uint32_t len,  int header)
-{
-    FRESULT res;
-    FIL fil;
-    char path[64];
-    uint32_t bw;
-
-    sprintf(path, "0:/%s", file_name);
-
-    res = f_mount(&fatfs_obj, "", 1);
-    if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
-        return res;
-    }
-
-	if ( header == 1 ) {
-		/* create a new file */
-		res = f_open(&fil, path, FA_CREATE_ALWAYS | FA_WRITE);
-	} else {
-		/* append data to file */
-		res = f_open(&fil, path, FA_OPEN_APPEND | FA_WRITE);
-	}
-	if(res != FR_OK){
-		//printf("f_open fail %d\r\n",res);
-		return res;
-	}
-
-    res = f_write(&fil, buff, len, &bw);
-    if(res != FR_OK){
-        //printf("f_write fail %d\r\n",res);
-        return res;
-    }
-
-    res =  f_close(&fil);
-    if(res != FR_OK){
-        //printf("f_close fail %d\r\n",res);
-    }
-
-    res = f_mount(NULL, "", 0);
-    if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
-    }
-    return bw;
-}
-
-uint32_t write_sensor_file(char * file_name, uint32_t sample_size, 
-        int16_t *acc_samples, int header)
-{
-    FRESULT res;
-    FIL fil;
-    char path[64];
-    char buff[128];
-    uint32_t buff_len;
-    uint32_t bw;
-
-    sprintf(path, "0:/%s", file_name);
-
-    res = f_mount(&fatfs_obj, "", 1);
-    if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
-        return res;
-    }
-
-	if ( header == 1 ) {
-		/* create a new file */
-		res = f_open(&fil, path, FA_CREATE_ALWAYS | FA_WRITE);
-	} else {
-		/* append data to file */
-		res = f_open(&fil, path, FA_OPEN_APPEND | FA_WRITE);
-	}
-	if(res != FR_OK){
-		//printf("f_open fail %d\r\n",res);
-		return res;
-	}
-
-	if ( header == 1 ) {
-		strcpy(buff, "Acc_x,Acc_y,Acc_z,Gyro_x,Gyro_y,Gyro_z\n");
-		buff_len = strlen(buff);
-	}
-    else {
-        uint32_t buff_offset = 0;
-
-        for (int i = 0; i < sample_size / 2; i++) {
-			buff_offset += snprintf(&buff[buff_offset], 128,
-                    "%d,", acc_samples[i]);
-        }
-		buff_offset --; //Truncate the last comma in each line
-		buff_offset += snprintf(&buff[buff_offset], 128,"\r\n");
-
-        buff_len = buff_offset;
-    }
-
-    res = f_write(&fil, buff, buff_len, &bw);
-    if(res != FR_OK){
-        //printf("f_write fail %d\r\n",res);
-        return res;
-    }
-
-    res =  f_close(&fil);
-    if(res != FR_OK){
-        //printf("f_close fail %d\r\n",res);
-    }
-
-    res = f_mount(NULL, "", 0);
-    if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
-    }
-    return bw;
-}
-#endif
 
 static uint32_t read_config_file( void )
 {
@@ -604,7 +501,7 @@ static uint32_t read_config_file( void )
     // mount
     res = f_mount(&fatfs_obj, "", 1);
     if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
+        printf("f_mount fail %d\r\n",res);
         return res;
     }
 
@@ -618,61 +515,63 @@ static uint32_t read_config_file( void )
         return res;
     }
 
-	/* Read config.ini from sdcard */
-	mode = ini_getl("NDP Firmware", "Mode", 0, inifile);
-	sprintf(section, "Function_%d", mode);
+    /* Read config.ini from sdcard */
+    mode = ini_getl("NDP Firmware", "Mode", 0, inifile);
+    sprintf(section, "Function_%d", mode);
 
-	ini_gets(section, "Description", NULL, mode_description, sizeof(mode_description), inifile);
+    ini_gets(section, "Description", NULL, mode_description, sizeof(mode_description), inifile);
 
-	ini_gets(section, "MCU", MCU_FILE_NAME, \
-						mcu_file_name, sizeof(mcu_file_name), inifile);
-	ini_gets(section, "DSP", DSP_FILE_NAME, \
-						dsp_file_name, sizeof(dsp_file_name), inifile);
-	ini_gets(section, "DNN", MODEL_FILE_NAME, \
-						model_file_name, sizeof(model_file_name), inifile);
-	ini_gets(section, "Button_shift", "audio", \
-						config_items.button_switch, sizeof(config_items.button_switch), inifile);
+    ini_gets(section, "MCU", MCU_FILE_NAME, \
+                        mcu_file_name, sizeof(mcu_file_name), inifile);
+    ini_gets(section, "DSP", DSP_FILE_NAME, \
+                        dsp_file_name, sizeof(dsp_file_name), inifile);
+    ini_gets(section, "DNN", MODEL_FILE_NAME, \
+                        model_file_name, sizeof(model_file_name), inifile);
+    ini_gets(section, "Button_shift", "audio", \
+                        config_items.button_switch, sizeof(config_items.button_switch), inifile);
+    config_items.dec_inshift_value = ini_getl(section, "DECIMATION_INSHIFT_VALUE", DEC_INSHIFT_VALUE_DEFAULT, inifile);
+    config_items.dec_inshift_offset = ini_getl(section, "DECIMATION_INSHIFT_OFFSET", DEC_INSHIFT_OFFSET_DEFAULT, inifile);
 
-	/* Get led color according according to voice command */
-	for (int idx = 0; idx < LED_EVENT_NUM; idx++)
-	{
-		sprintf(key, "IDX%d", idx);
-		ini_gets("Led", key, "-", color, sizeof(color), inifile);
+    /* Get led color according according to voice command */
+    for (int idx = 0; idx < LED_EVENT_NUM; idx++)
+    {
+        sprintf(key, "IDX%d", idx);
+        ini_gets("Led", key, "-", color, sizeof(color), inifile);
 
-		if( strncmp(color, "red", 3) == 0)
-		{
-			config_items.led_event_color[idx] = LED_COLOR_RED;
-		} else if( strncmp(color, "green", 5) == 0)
-		{
-			config_items.led_event_color[idx] = LED_COLOR_GREEN;
-		} else if( strncmp(color, "blue", 4) == 0)
-		{
-			config_items.led_event_color[idx] = LED_COLOR_BLUE;
-		} else if( strncmp(color, "cyan", 4) == 0)
-		{
-			config_items.led_event_color[idx] = LED_COLOR_CYAN;
-		} else if( strncmp(color, "magenta", 6) == 0)
-		{
-		    config_items.led_event_color[idx] = LED_COLOR_MAGENTA;
-		} else if( strncmp(color, "yellow", 6) == 0)
-		{
-			config_items.led_event_color[idx] = LED_COLOR_YELLOW;
-		} else
-		{
-			config_items.led_event_color[idx] = LED_EVENT_NONE;
-		}
-	}
+        if( strncmp(color, "red", 3) == 0)
+        {
+            config_items.led_event_color[idx] = LED_COLOR_RED;
+        } else if( strncmp(color, "green", 5) == 0)
+        {
+            config_items.led_event_color[idx] = LED_COLOR_GREEN;
+        } else if( strncmp(color, "blue", 4) == 0)
+        {
+            config_items.led_event_color[idx] = LED_COLOR_BLUE;
+        } else if( strncmp(color, "cyan", 4) == 0)
+        {
+            config_items.led_event_color[idx] = LED_COLOR_CYAN;
+        } else if( strncmp(color, "magenta", 6) == 0)
+        {
+            config_items.led_event_color[idx] = LED_COLOR_MAGENTA;
+        } else if( strncmp(color, "yellow", 6) == 0)
+        {
+            config_items.led_event_color[idx] = LED_COLOR_YELLOW;
+        } else
+        {
+            config_items.led_event_color[idx] = LED_EVENT_NONE;
+        }
+    }
 
-	print_console_type = ini_getl("Debug Print", "Port", CONSOLE_UART, inifile);
-	config_items.recording_period = ini_getl("Recording Period", "Recording_Period", 10, inifile);
-	config_items.low_power_mode = ini_getl("Low Power Mode", "Power_Mode",DOWN_DOWN_LP_MODE, inifile);
-	config_items.imu_write_to_file = ini_getl("IMU data stream", "Write_to_file", \
-										IMU_FUNC_ENABLE, inifile);
-	config_items.imu_print_to_terminal = ini_getl("IMU data stream", "Print_to_terminal", \
-										IMU_FUNC_DISABLE, inifile);
+    print_console_type = ini_getl("Debug Print", "Port", CONSOLE_UART, inifile);
+    config_items.recording_period = ini_getl("Recording Period", "Recording_Period", 10, inifile);
+    config_items.low_power_mode = ini_getl("Low Power Mode", "Power_Mode",DOWN_DOWN_LP_MODE, inifile);
+    config_items.imu_write_to_file = ini_getl("IMU data stream", "Write_to_file", \
+                                        IMU_FUNC_ENABLE, inifile);
+    config_items.imu_print_to_terminal = ini_getl("IMU data stream", "Print_to_terminal", \
+                                        IMU_FUNC_DISABLE, inifile);
 
-	// BLE Configuration
-	config_items.ble_mode = ini_getl("BLE Mode", "BLE_Enabled", BLE_DISABLE, inifile);
+    // BLE Configuration
+    config_items.ble_mode = ini_getl("BLE Mode", "BLE_Enabled", BLE_DISABLE, inifile);
     ini_gets("BLE Mode", "BLE_Name", BLE_DEFAULT_NAME, \
             config_items.ble_name, sizeof(config_items.ble_name), inifile);
 
@@ -688,18 +587,47 @@ static uint32_t read_config_file( void )
     ini_gets("WIFI", "Country_Code", "US", \
                         config_items.wifi_cc, sizeof(config_items.wifi_cc), inifile);
 
-    // IoTConnect configuration
-    ini_gets("IoTConnect", "CPID", "Undefined", \
-                        config_items.iotc_cpid, sizeof(config_items.iotc_cpid), inifile);
-
-    ini_gets("IoTConnect", "Device_Unique_ID", "Undefined", \
-                        config_items.iotc_uid, sizeof(config_items.iotc_uid), inifile);
-
-    ini_gets("IoTConnect", "Environment", "Undefined", \
-                        config_items.iotc_env, sizeof(config_items.iotc_env), inifile);
+    ini_gets("WIFI", "NTP_Time_Server", "pool.ntp.org", \
+                        config_items.ntp_time_server, sizeof(config_items.ntp_time_server), inifile);
 
     config_items.target_cloud = ini_getl("Cloud Connectivity", "Target_Cloud", CLOUD_NONE, inifile);
 
+    // Only read the configuration items needed for the current cloud configuration
+    switch(config_items.target_cloud){
+        case CLOUD_IOTCONNECT:
+            // IoTConnect configuration
+            ini_gets("IoTConnect", "CPID", "Undefined", \
+                                config_items.iotc_cpid, sizeof(config_items.iotc_cpid), inifile);
+
+            ini_gets("IoTConnect", "Device_Unique_ID", "Undefined", \
+                                config_items.iotc_uid, sizeof(config_items.iotc_uid), inifile);
+
+            ini_gets("IoTConnect", "Environment", "Undefined", \
+                                config_items.iotc_env, sizeof(config_items.iotc_env), inifile);
+
+            break;
+        case CLOUD_AWS:
+            // AWS configuration items
+            ini_gets("AWS", "Endpoint", "Undefined", \
+                                config_items.aws_endpoint, sizeof(config_items.aws_endpoint), inifile);
+
+            ini_gets("AWS", "Device_Unique_ID", "Undefined", \
+                                config_items.aws_device_id, sizeof(config_items.aws_device_id), inifile);
+
+            ini_gets("AWS", "MQTT_Pub_Topic", "Undefined", \
+                                config_items.aws_pub_topic, sizeof(config_items.aws_pub_topic), inifile);
+
+            ini_gets("AWS", "MQTT_Sub_Topic", "Undefined", \
+                                config_items.aws_sub_topic, sizeof(config_items.aws_sub_topic), inifile);
+
+            break;
+        case CLOUD_AZURE:
+            break;
+        default:
+            break;
+    }
+
+    // Certificate config items
     config_items.cert_location = ini_getl("Certs", "Cert_Location", LOAD_CERTS_USE_DA16600_CERTS, inifile);
 
     ini_gets("Certs", "Root_CA_Filename", "Undefined", \
@@ -714,7 +642,7 @@ static uint32_t read_config_file( void )
     // unmount
     res = f_mount(NULL, "", 0);
     if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
+        printf("f_mount umount fail %d\r\n",res);
     }
 
     return res;
@@ -722,44 +650,44 @@ static uint32_t read_config_file( void )
 
 uint32_t get_synpkg_config_info( void )
 {
-	uint32_t res = 0;
-	bool sdcard, flag = false;
+    uint32_t res = 0;
+    bool sdcard, flag = false;
 
-	sdcard = (sdmmc_exist_check() == 1) ?  true : false;
-	if (sdcard){
-		sdcard_slot_status =  SDCARD_IN_SLOT;
-	}else{
-		sdcard_slot_status =  SDCARD_NOT_IN_SLOT;
-	}
+    sdcard = (sdmmc_exist_check() == 1) ?  true : false;
+    if (sdcard){
+        sdcard_slot_status =  SDCARD_IN_SLOT;
+    }else{
+        sdcard_slot_status =  SDCARD_NOT_IN_SLOT;
+    }
 
-	if (SDCARD_IN_SLOT == sdcard_slot_status){
-		/* attempt to read config.ini from sdcard */
-		res = read_config_file();
-		if(res != FR_OK){
-			//printf("Cannot find config.txt in sdcard, try to boot from Flash\n");
-			flag = true; /* Indicates that the SD card is empty */
-		} else {
-			boot_mode = BOOT_MODE_SD;
-		}
-	}
+    if (SDCARD_IN_SLOT == sdcard_slot_status){
+        /* attempt to read config.ini from sdcard */
+        res = read_config_file();
+        if(res != FR_OK){
+            //printf("Cannot find config.txt in sdcard, try to boot from Flash\n");
+            flag = true; /* Indicates that the SD card is empty */
+        } else {
+            boot_mode = BOOT_MODE_SD;
+        }
+    }
 
-	if ((SDCARD_NOT_IN_SLOT == sdcard_slot_status) || (flag)){
-		/* must start NDP120 to initialize its SPI bus first and then read configs from Flash */
-		boot_mode = BOOT_MODE_FLASH;
-		print_console_type = flag ? CONSOLE_UART : CONSOLE_USB_CDC;
-	}
+    if ((SDCARD_NOT_IN_SLOT == sdcard_slot_status) || (flag)){
+        /* must start NDP120 to initialize its SPI bus first and then read configs from Flash */
+        boot_mode = BOOT_MODE_FLASH;
+        print_console_type = flag ? CONSOLE_UART : CONSOLE_USB_CDC;
+    }
 
-	if (BOOT_MODE_SD == boot_mode){
-		// Output the current configuration for the user
-		printConfg();
+    if (BOOT_MODE_SD == boot_mode){
+        // Output the current configuration for the user
+        //printConfg();
 
-		//printf("NDP120 images identified . . . \n");
-		//printf("    MCU : %s\n", mcu_file_name);
-		//printf("    DSP : %s\n", dsp_file_name);
-		//printf("    DNN : %s\n", model_file_name);
-	}
+        //printf("NDP120 images identified . . . \n");
+        //printf("    MCU : %s\n", mcu_file_name);
+        //printf("    DSP : %s\n", dsp_file_name);
+        //printf("    DNN : %s\n", model_file_name);
+    }
 
-	return res;
+    return res;
 }
 
 uint32_t get_sdcard_total_sectors( void )
@@ -769,12 +697,12 @@ uint32_t get_sdcard_total_sectors( void )
 
 uint32_t get_sdcard_slot_status( void )
 {
-	return sdcard_slot_status;
+    return sdcard_slot_status;
 }
 
 uint32_t get_synpkg_boot_mode( void )
 {
-	return boot_mode;
+    return boot_mode;
 }
 
 int get_print_console_type( void )
@@ -784,15 +712,15 @@ int get_print_console_type( void )
 
 /* Identify circular_motion mode based on the DNN file in the SD card
    or the setting value stored in the Flash */
-int motion_to_disable(void)
+int motion_running(void)
 {
-	if (get_synpkg_boot_mode() == BOOT_MODE_SD)
-	{
-		if (strstr (model_file_name, "motion") != NULL )
-		{
-			mode_circular_motion = CIRCULAR_MOTION_ENABLE;
-		}
-	}
+    if (get_synpkg_boot_mode() == BOOT_MODE_SD)
+    {
+        if (strstr (model_file_name, "motion") != NULL )
+        {
+            mode_circular_motion = CIRCULAR_MOTION_ENABLE;
+        }
+    }
 
     return mode_circular_motion;
 }
@@ -833,7 +761,7 @@ int is_file_exist_in_sdcard( char *filename )
     // mount
     res = f_mount(&fatfs_obj, "", 1);
     if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
+        printf("f_mount fail %d\r\n",res);
         return res;
     }
 
@@ -846,7 +774,7 @@ int is_file_exist_in_sdcard( char *filename )
     // unmount
     res = f_unmount("");
     if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
+        printf("f_mount umount fail %d\r\n",res);
     }
 
     return status;
@@ -856,99 +784,105 @@ void printConfg(void)
 {
 
     // Output application information to user
-    //printf("\n\nApplication Version: %s\n", VERSION_STRING);
-    //printf("Release Date       : %s\n\n", RELEASE_DATE);
-    //printf("Features enabled in config.ini file:\n");
+    printf("\n\nApplication Version: %s\n", VERSION_STRING);
+    printf("Release Date       : %s\n\n", RELEASE_DATE);
+    printf("Features enabled in config.ini file:\n");
 
-    //printf("\n  Operation mode=%d selected: %s\r\n", mode, mode_description);
+    printf("\n  Operation mode=%d selected: %s\r\n", mode, mode_description);
 
     // Output recording feature driven by Low Power Mode Selection
     if(config_items.low_power_mode == DOWN_DOWN_LP_MODE){
 
-        //printf("  The Recording feature is enabled!\n");
-        //printf("    Press user button < 400ms to record %d seconds of %s data\n", config_items.recording_period, config_items.button_switch);
-        //printf("    Press user button > 3sec to flash the NDP120 firmware to FLASH\n\n");
+        printf("  The Recording feature is enabled!\n");
+        printf("    Press user button < 400ms to record %d seconds of %s data\n", config_items.recording_period, config_items.button_switch);
+        printf("    Press user button > 3sec to flash the NDP120 firmware to FLASH\n\n");
 
         if(0 == strcmp(config_items.button_switch, "imu")){
             if(IMU_FUNC_ENABLE == config_items.imu_print_to_terminal){
-                //printf("    IMU data will be streamed to the debug UART\n");
+                printf("    IMU data will be streamed to the debug UART\n");
             }
             if(IMU_FUNC_ENABLE == config_items.imu_write_to_file){
-                //printf("    IMU data will be captured to the microSD card\n");
+                printf("    IMU data will be captured to the microSD card\n");
             }
 
             if((IMU_FUNC_DISABLE == config_items.imu_print_to_terminal) && (IMU_FUNC_DISABLE == config_items.imu_write_to_file)){
-                //printf("    WARNING: The application is configured to capture IMU data, but the configuration does indicate where to capture the IMU data!\n");
-                //printf("             Please edit the config.ini file, section [IMU data stream]\n");
+                printf("    WARNING: The application is configured to capture IMU data, but the configuration does indicate where to capture the IMU data!\n");
+                printf("             Please edit the config.ini file, section [IMU data stream]\n");
             }
         }
     }
     else {
 
-        //printf("  Note: The recording feature is disabled due to low power mode being set to 1!\n");
-        //printf("    To enable the recording feature, edit config.ini on the microSD\n");
-        //printf("    card and set \"[Low Power Mode] -> Power_Mode=0\"\n\n");
+        printf("  Note: The recording feature is disabled due to low power mode being set to 1!\n");
+        printf("    To enable the recording feature, edit config.ini on the microSD\n");
+        printf("    card and set \"[Low Power Mode] -> Power_Mode=0\"\n\n");
     }
 
     // Output BLE mode
-    //printf("\n  BLE Mode: %s\n", (config_items.ble_mode) ? "Enabled": "Disabled");
+    printf("\n  BLE Mode: %s\n", (config_items.ble_mode) ? "Enabled": "Disabled");
     if(BLE_ENABLE == config_items.ble_mode){
-        //printf("  BLE Advertisement Name: %s\n", config_items.ble_name);
+        printf("  BLE Advertisement Name: %s\n", config_items.ble_name);
     }
 
     // Output Cloud configuration
-    //printf("\n\n  Cloud connectivity: ");
+    printf("\n\n  Cloud connectivity: ");
     if(CLOUD_NONE == config_items.target_cloud){
-        //printf("Disabled\n");
+        printf("Disabled\n");
     }
     else{
         switch(config_items.target_cloud){
             case CLOUD_IOTCONNECT:
-                //printf("Avnet's IoTConnect\n");
-                //printf("    Device Unique ID: %s\n", config_items.iotc_uid);
-                //printf("    Environment     : %s\n", config_items.iotc_env);
-                //printf("    CPID            : %.*s********************%.*s\n", \
-						6, config_items.iotc_cpid, 6, &(config_items.iotc_cpid[26]));
+                printf("Avnet's IoTConnect\n");
+                printf("    Device Unique ID: %s\n", config_items.iotc_uid);
+                printf("    Environment     : %s\n", config_items.iotc_env);
+                printf("    CPID            : %.*s********************%.*s\n", \
+                        6, config_items.iotc_cpid, 6, &(config_items.iotc_cpid[26]));
                 break;
             case CLOUD_AWS:
-                //printf("AWS <currently not supported>\n");
+                printf("AWS IoT Core\n");
+                printf("    Device Unique ID: %s\n", config_items.aws_device_id);
+                printf("    Endpoint        : %s\n", config_items.aws_endpoint);
+                printf("    Pub Topic       : %s\n", config_items.aws_pub_topic);
+                printf("    Sub Topic       : %s\n", config_items.aws_sub_topic);
                 break;
             case CLOUD_AZURE:
-                //printf("Azure <currently not supported>\n");
+                printf("Azure <currently not supported>\n");
                 break;
             default:
                 break;
         }
 
-        //printf("\n  Using Cloud Certificates ");
+        printf("\n  Using Cloud Certificates ");
         switch(get_load_certificate_from()){
             case LOAD_CERTS_FROM_HEADER:
-                //printf("from certs.h header file\n");
+                printf("from certs.h header file\n");
                 break;
 
             case LOAD_CERTS_USE_DA16600_CERTS:
-                //printf("previously already loaded on DA16600\n");
+                printf("previously already loaded on DA16600\n");
                 break;
 
             case LOAD_CERTS_FROM_FILES:
-                //printf("from files on microSD card\n");
-                //printf("      Root CA          : %s\n", get_certificate_file_name(ROOT_CA));
-                //printf("      Device Cert      : %s\n", get_certificate_file_name(DEVICE_CERT));
-                //printf("      Device Public Key: %s\n", get_certificate_file_name(DEVICE_PUBLIC_KEY));
+                printf("from files on microSD card\n");
+                printf("      Root CA          : %s\n", get_certificate_file_name(ROOT_CA));
+                printf("      Device Cert      : %s\n", get_certificate_file_name(DEVICE_CERT));
+                printf("      Device Public Key: %s\n", get_certificate_file_name(DEVICE_PUBLIC_KEY));
                 break;
         }
 
-        //printf("\n  WiFi Configuration\n");
+        printf("\n  WiFi Configuration\n");
 
         if(USE_CONFIG_WIFI_SETTINGS == get_wifi_config()){
 
-            //printf("    Access Point (SSID)  : %s\n", config_items.wifi_ap_name);
-            //printf("    Access Point password: %s\n", config_items.wifi_passwd);
-            //printf("    Country Code         : %s\n\n", config_items.wifi_cc);
+            printf("    Access Point (SSID)  : %s\n", config_items.wifi_ap_name);
+            printf("    Access Point password: %s\n", config_items.wifi_passwd);
+            printf("    Country Code         : %s\n", config_items.wifi_cc);
         }
         else{
-            //printf("    Please use the Renesas Wi-Fi Provisioning Tool from your app store to \nconfigure the Wi-Fi network.\n");
+            printf("    Please use the Renesas Wi-Fi Provisioning Tool from your app store to \nconfigure the Wi-Fi network.\n");
         }
+        printf("    NTP Time Server      : %s\n\n", config_items.ntp_time_server);
+
     }
 }
 
@@ -963,12 +897,12 @@ bool get_certificate_data(char* fileName, int certificate_id, char returnCertDat
 
     // Generate the filename used to operate on the filesystem
     snprintf(certFileName, sizeof(certFileName), "0:/%s", fileName);
-    ////printf("Certificate file name: %s\n", certFileName);
+    //printf("Certificate file name: %s\n", certFileName);
 
     // mount the microSD card
     res = f_mount(&fatfs_obj, "", 1);
     if(res != FR_OK){
-        //printf("f_mount fail %d\r\n",res);
+        printf("f_mount fail %d\r\n",res);
         return false;
     }
 
@@ -976,14 +910,14 @@ bool get_certificate_data(char* fileName, int certificate_id, char returnCertDat
     res = f_stat (certFileName, &fno);
     if(res == FR_NO_FILE){
         f_unmount("");
-        //printf("File NOT found!!\n");
+        printf("File NOT found!!\n");
         return false;
     }
 
     // Open the file
     res = f_open(&fil, certFileName, FA_READ);
     if(res != FR_OK){
-        //printf("f_open fail %d\r\n",res);
+        printf("f_open fail %d\r\n",res);
         return false;
     }
 
@@ -1017,13 +951,13 @@ bool get_certificate_data(char* fileName, int certificate_id, char returnCertDat
     // Close the file
     res =  f_close(&fil);
     if(res != FR_OK){
-        //printf("f_close fail %d\r\n",res);
+        printf("f_close fail %d\r\n",res);
     }
 
     // Unmount the microSD card
     res = f_mount(NULL, "", 0);
     if(res != FR_OK){
-        //printf("f_mount umount fail %d\r\n",res);
+        printf("f_mount umount fail %d\r\n",res);
     }
 
     return true;
@@ -1054,7 +988,7 @@ char* get_wifi_cc( void ){
     return config_items.wifi_cc;
 }
 
-char* get_iotc_uid( void )
+char* get_device_uid( void )
 {
     return config_items.iotc_uid;
 }
@@ -1095,3 +1029,35 @@ char* get_certificate_file_name(int certID){
     }
 }
 
+char* get_ntp_time_server( void ){
+
+    return config_items.ntp_time_server;
+}
+
+int get_dec_inshift_value( void )
+{
+    return config_items.dec_inshift_value;
+}
+
+int get_dec_inshift_offset( void )
+{
+    return config_items.dec_inshift_offset;
+}
+
+char* get_aws_endpoint( void ){
+    return config_items.aws_endpoint;
+}
+
+char* get_aws_deviceId( void ){
+    return config_items.aws_device_id;
+}
+
+char* get_aws_sub_topic( void )
+{
+    return config_items.aws_sub_topic;
+}
+
+char* get_aws_pub_topic( void )
+{
+    return config_items.aws_pub_topic;
+}

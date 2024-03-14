@@ -35,8 +35,6 @@
 #define CONVERT_ADC_GYR             (float)(250.0f/32768.0f)
 #define NORMALIZE_GYR               (250.0f)
 
-static SemaphoreHandle_t g_imu_ready_semaphore;
-
 typedef struct {
     float* pdata;
     uint16_t sample_nr;
@@ -55,7 +53,6 @@ static void ndp_print_imu(void);
  */
 bool ei_inertial_init(void)
 {
-    g_imu_ready_semaphore = xSemaphoreCreateBinary();
 
     return true;
 }
@@ -73,24 +70,24 @@ int ei_fusion_inertial_setup_recording(bool start)
         }
 
         /* enable sensor */
-        s = ndp_core2_platform_tiny_sensor_ctl(EI_FUSION_IMU_SENSOR_INDEX, 1);
-        if (s != 0) {
-            ei_printf("enable sensor[%d] failed: %d\n", EI_FUSION_IMU_SENSOR_INDEX, s);
+        s = ndp_core2_platform_tiny_config_interrupts(
+                    NDP_CORE2_INTERRUPT_EXTRACT_READY, 1);
+        if (s) {
+            ei_printf("enable extract interrupt failed: %d\n", s);
             return s;
         }
     }
     else {
-        s = ndp_core2_platform_tiny_sensor_ctl(EI_FUSION_IMU_SENSOR_INDEX, 0);
-        if (s != 0) {
-            ei_printf("disable sensor[%d] failed: %d\n", EI_FUSION_IMU_SENSOR_INDEX, s);
+        s = ndp_core2_platform_tiny_config_interrupts(
+                    NDP_CORE2_INTERRUPT_EXTRACT_READY, 0);
+        if (s) {
+            ei_printf("disable extract interrupt failed: %d\n", s);
             return s;
         }
 
         if (ei_run_impulse_is_active() == true) {
             ndp_irq_enable();
         }
-
-
     }
 
     return s;
@@ -109,24 +106,15 @@ uint32_t ei_inertial_read_data(float* buffer, uint32_t max_sample)
     uint8_t data_ptr[1024] = {0};
     int s;
 
-    while(1) {
+    while(max_sample > (my_imu.sample_nr/INERTIAL_AXIS_SAMPLED)) {
         s = ndp_core2_platform_tiny_sensor_extract_data(data_ptr,
-                EI_FUSION_IMU_SENSOR_INDEX, icm42670_extraction_cb, &my_imu);
-
+            EI_FUSION_IMU_SENSOR_INDEX, icm42670_extraction_cb, &my_imu);
         if ((s) && (s != NDP_CORE2_ERROR_DATA_REREAD)) {
-            ei_printf("Error in ndp_core2_platform_tiny_sensor_extract_data, err: %d\r\n", s);
-            break;
-        }
-        else if (s == NDP_CORE2_ERROR_DATA_REREAD) {
-            // todo ?
-            //ei_sleep(5);
-        }
-        else {
-            // wait here ?
-            xSemaphoreTake(g_imu_ready_semaphore, portMAX_DELAY);
+            printf("sensor extract data failed: %d\n", s);
             break;
         }
     }
+
 #if defined(IMU_SCALE_DATA) && (IMU_SCALE_DATA == 1)
     uint16_t i;
     uint16_t j;
@@ -187,5 +175,4 @@ static void icm42670_extraction_cb(uint32_t sample_size, uint8_t *sensor_data, v
         cb_sensor_arg->sample_nr += (sample_size >> 1);
     }
 
-    xSemaphoreGive(g_imu_ready_semaphore);
 }

@@ -145,6 +145,7 @@ void read_ndp_model(void)
     nn_num = 0;
     prev_nn_num = 0;
 
+    //ei_printf("\nFrom model total labels: %d\n", num_labels);
     for (j = 0; j < num_labels; j++) {
         label_string = labels[j];
         nn_num = *(label_string + 2) - '0';
@@ -173,7 +174,7 @@ void print_ndp_model(void)
     uint16_t i;
 
     ei_printf("From model total labels: %d\n", num_labels);
-    ei_printf("Classes:\n", num_labels);
+    ei_printf("Classes:\n");
     for (i = 0; i < num_labels; i++) {
         ei_printf("\tlabel %d: %s\r\n", i, labels[i]);
     }

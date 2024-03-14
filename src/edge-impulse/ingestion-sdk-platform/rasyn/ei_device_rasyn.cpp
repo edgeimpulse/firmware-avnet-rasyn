@@ -62,7 +62,7 @@ EiRASyn::EiRASyn(EiDeviceMemory* code_flash, EiDeviceMemory* data_flash_to_set, 
     sensors[MICROPHONE].max_sample_length_s = 10;    // fixed for now
 
     sensors[IMU].name = "Inertial";
-    sensors[IMU].frequencies[0] = 100.0f;
+    sensors[IMU].frequencies[0] = 200.0f;
     sensors[IMU].start_sampling_cb = &ei_imu_start_sampling;
     sensors[IMU].max_sample_length_s = 20;    // fixed for now
 

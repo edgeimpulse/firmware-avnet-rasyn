@@ -85,7 +85,6 @@ bool ei_microphone_start_sampling(void)
 {
     EiRASyn* dev = static_cast<EiRASyn*>(EiDeviceInfo::get_device());
     EiSDMemory* mem = static_cast<EiSDMemory*>(dev->get_sdcard());
-    int ret;
     uint32_t sample_size = 0;
 
     sensor_aq_payload_info payload = {
@@ -94,6 +93,12 @@ bool ei_microphone_start_sampling(void)
         dev->get_sample_interval_ms(),
         { { "audio", "wav" } }
     };
+
+    if (motion_running() == CIRCULAR_MOTION_ENABLE) {
+        ei_printf("ERR: error, microphone not available for ingestion\r\n");
+        return false;
+    }
+
 
     ei_printf("Sampling settings:\n");
     ei_printf("\tInterval: ");
@@ -178,6 +183,25 @@ bool ei_microphone_start_sampling(void)
     ei_printf("OK\n");
 
     return true;
+}
+
+/**
+ * @brief 
+ * 
+ */
+void ei_microphone_stop_stream(void)
+{
+    //
+}
+
+/**
+ * @brief 
+ * 
+ */
+static void mic_thread_function(void)
+{
+
+    sampling_finished = true;
 }
 
 /**
@@ -313,10 +337,26 @@ static int ei_audio_record_operation(int isstart, uint32_t *sample_size)
     if (isstart) {
         if (ei_run_impulse_is_active() == true) {
             ndp_irq_disable();
+
+            if (motion_running() == CIRCULAR_MOTION_ENABLE) {
+                s = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_PDM);
+                if (s){
+                    ei_printf("ndp_core2_platform_tiny_feature_set set 0x%x failed %d\r\n",
+                        NDP_CORE2_FEATURE_PDM, s);
+                }
+            }
         }
     }
     else {
         if (ei_run_impulse_is_active() == true) {
+            if (motion_running() == CIRCULAR_MOTION_ENABLE) {
+            s = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_NONE);
+                if (s){
+                    ei_printf("ndp_core2_platform_tiny_feature_set set 0x%x failed %d\r\n",
+                                NDP_CORE2_FEATURE_NONE, s);
+                }
+            }
+
             ndp_irq_enable();
         }
     }
@@ -384,7 +424,7 @@ void audio_extraction_cb (uint32_t extract_size, uint8_t *audio_data,  void *aud
     int16_t *pread_data = (int16_t*)audio_data;
 
     if (extract_size > 0) {
-        xSemaphoreTake(g_ndp_mutex,portMAX_DELAY);
+        xSemaphoreTake(g_ndp_mutex, portMAX_DELAY);
         cb_audio_arg->total_len_bytes += extract_size;
         mem->write_sample_data(audio_data, headerOffset + extract_size, extract_size);
 

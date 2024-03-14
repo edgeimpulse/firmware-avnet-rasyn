@@ -5,8 +5,6 @@
 #include "semphr.h"
 extern void ei_main_thread_create(void);
 extern TaskHandle_t ei_main_thread;
-extern void led_threadx_create(void);
-extern TaskHandle_t led_threadx;
 uint32_t g_fsp_common_thread_count;
 bool g_fsp_common_initialized;
 SemaphoreHandle_t g_fsp_common_initialized_semaphore;
@@ -105,7 +103,6 @@ int main(void)
 
     /* Init RTOS tasks. */
     ei_main_thread_create ();
-    led_threadx_create ();
 
     /* Start the scheduler. */
     vTaskStartScheduler ();

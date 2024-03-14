@@ -32,6 +32,7 @@
 #include "ingestion-sdk-platform/rasyn/ei_at_handlers.h"
 #include "ingestion-sdk-platform/sensor/ei_inertial.h"
 #include "usb_thread_interface.h"
+#include "led_thread_interface.h"
 
 /* Private variables -------------------------------------------------------------------- */
 static ATServer *at;
@@ -64,12 +65,9 @@ void ei_main_thread_entry(void *pvParameters)
 
     /* read config info of ndp firmwares */
     get_synpkg_config_info();
-    
-    /* Choose the appropriate debug print console */
-    if (get_print_console_type() == CONSOLE_USB_CDC) {
-        start_usb_pcdc_thread();
-        console_deinit();
-    }
+
+    led_thread_start();
+    start_usb_pcdc_thread();
     ei_inertial_init();
 
     ndp_thread_start();

@@ -43,6 +43,7 @@ static bool at_get_upload_settings(void);
 static bool at_set_upload_settings(const char **argv, const int argc);
 static bool at_set_upload_host(const char **argv, const int argc);
 static bool at_list_sensors(void);
+static bool at_list_fusion_sensors(void);
 
 static bool at_read_buffer(const char **argv, const int argc);
 
@@ -101,6 +102,7 @@ static bool at_list_config(void)
     ei_printf("\n");
     ei_printf("===== Sensors ======\n");
     at_list_sensors();
+    at_list_fusion_sensors();
     ei_printf("\n");
     ei_printf("===== Snapshot ======\n");
     ei_printf("\n");
@@ -448,6 +450,17 @@ static bool at_list_sensors(void)
  *
  * @return
  */
+static bool at_list_fusion_sensors(void)
+{
+    // we don't fusion any sensor
+    
+    return true;
+}
+
+/**
+ *
+ * @return
+ */
 static bool at_get_upload_settings(void)
 {
     bool ret_val = false;
@@ -645,8 +658,7 @@ static bool local_read_encode_send_sample_buffer(size_t address, size_t length)
         }
 
         size_out = base64_encode_buffer((char *)buffer, bytes_to_read, (char *)buffer_out, output_size_check);
-        _write(NULL, (char*)buffer_out, size_out);
-        //comms_send((uint8_t*)buffer_out, size_out, 100);   // direct write to speed up
+        _write(NULL, (char*)buffer_out, size_out);  // direct write to speed up
 
         address += bytes_to_read;
         length -= bytes_to_read;

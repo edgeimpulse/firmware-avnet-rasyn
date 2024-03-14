@@ -42,10 +42,16 @@ static int DA9231_reg_read(uint8_t addr, uint8_t * val)
 
     temp = addr;
     err = i2c_write(&temp, 1, true);
-    if (FSP_SUCCESS != err) {printf("%s-%d", __func__, __LINE__); return err; }
+    if (FSP_SUCCESS != err) {
+        //printf("%s-%d", __func__, __LINE__); 
+        return err; 
+    }
 
     err = i2c_read(&temp, 1, false);
-    if (FSP_SUCCESS != err) {printf("%s-%d", __func__, __LINE__); return err; }
+    if (FSP_SUCCESS != err) {
+        //printf("%s-%d", __func__, __LINE__); 
+        return err; 
+    }
 
     *val = temp;
 
@@ -60,7 +66,10 @@ static int DA9231_reg_write(uint8_t addr, uint8_t val)
     temp[0] = addr;
     temp[1] = val;
     err = i2c_write(temp, 2, false);
-    if (FSP_SUCCESS != err) {printf("%s-%d", __func__, __LINE__); return err; }
+    if (FSP_SUCCESS != err) {
+        //printf("%s-%d", __func__, __LINE__); 
+        return err; 
+    }
 
     return FSP_SUCCESS;
 }
@@ -75,7 +84,7 @@ int DA9231_dump_regs(void)
     {
         temp = 0;
         err = DA9231_reg_read(i, &temp);
-        printf("REG%x=%x\r\n", i, temp);
+        //printf("REG%x=%x\r\n", i, temp);
     }
 
 #if 1
@@ -86,7 +95,7 @@ int DA9231_dump_regs(void)
     {
         temp = 0;
         err = DA9231_reg_read(i, &temp);
-        printf("REG%x=%x\r\n", i, temp);
+        //printf("REG%x=%x\r\n", i, temp);
     }
 #endif
 

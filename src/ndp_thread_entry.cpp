@@ -36,6 +36,7 @@
 #include "ingestion-sdk-platform/sensor/ei_inertial.h"
 #include "inference/ei_run_impulse.h"
 #include "peripheral/usb/usb_pcdc_vcom.h"
+#include "ingestion-sdk-platform/sensor/ei_inertial.h"
 
 #define NDP_TASK_STACK_SIZE_BYTE        32768
 
@@ -52,6 +53,7 @@ typedef struct blink_msg
 } blink_msg_t;
 
 static void ndp_thread_entry(void *pvParameters);
+static void set_decimation_inshift(void);
 
 /* Public functions -------------------------------------------------------- */
 /**
@@ -81,6 +83,7 @@ static void ndp_thread_entry(void *pvParameters)
 {
     FSP_PARAMETER_NOT_USED (pvParameters);
     int ret;
+    int fatal_error;
     uint8_t ndp_class_idx;
     uint8_t ndp_nn_idx;
     uint8_t sec_val;
@@ -151,23 +154,28 @@ static void ndp_thread_entry(void *pvParameters)
     read_ndp_model();
     //print_ndp_model();
 
-	if (motion_to_disable() == CIRCULAR_MOTION_DISABLE) {
-	    pdev->set_used_sensor(e_enabled_mic);
+	if (motion_running() == CIRCULAR_MOTION_DISABLE) {
+        set_decimation_inshift();
 
-        ret = ndp_core2_platform_tiny_sensor_ctl(0, 0); // disable IMU
-        if (!ret){
-            ei_printf("disable sensor[0] functionality\n");
-            pdev->set_imu_ok(true);
+	    pdev->set_used_sensor(e_enabled_mic);
+        ret = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_PDM);
+        if (ret){
+            ei_printf("ndp_core2_platform_tiny_feature_set set 0x%x failed %d\r\n",
+            NDP_CORE2_FEATURE_PDM, ret);
+        }
+            
+    }
+    else {
+        ret = ndp_core2_platform_tiny_sensor_ctl(EI_FUSION_IMU_SENSOR_INDEX, 1);
+        if (ret) {
+            ei_printf("Enable sensor[%d] icm-42670 failed: %d\n", EI_FUSION_IMU_SENSOR_INDEX, ret);
         }
         else {
-            ei_printf("error in disable sensor[0] functionality %d\n", ret);
-            ei_sleep(100);
+            ei_printf("Enable sensor[%d] icm-42670 done\n", EI_FUSION_IMU_SENSOR_INDEX);
+            pdev->set_imu_ok(true);
+            pdev->set_used_sensor(e_enabled_imu);
         }
-
-	}
-	else {
-	    pdev->set_used_sensor(e_enabled_imu);
-	}
+    }
 
     /* Enable NDP IRQ */
     ei_run_nn_normal();
@@ -193,7 +201,10 @@ static void ndp_thread_entry(void *pvParameters)
             // do something
             xSemaphoreTake(g_ndp_mutex, portMAX_DELAY);
             pdev->set_state(EiRASynStateMatch);
-            ndp_core2_platform_tiny_poll(&notifications, 1);
+            ndp_core2_platform_tiny_poll(&notifications, 1, &fatal_error);
+            if (fatal_error) {
+                ei_printf("\nNDP Fatal Error!!!\n\n");
+            }
             if (NDP_CORE2_ERROR_NONE == ndp_core2_platform_tiny_match_process(&ndp_nn_idx, &ndp_class_idx, &sec_val, NULL)) {
                 ei_classification_output(ndp_nn_idx, ndp_class_idx, sec_val);
 
@@ -212,4 +223,82 @@ static void ndp_thread_entry(void *pvParameters)
             //
         }
     }
+}
+
+/**
+ * @brief Set the decimation inshift object
+ * 
+ */
+static void set_decimation_inshift(void)
+{
+
+#define INSHIFT_AUDIO_ID 0
+#define INSHIFT_SINGLE_MIC_ID 0
+#define INSHIFT_DUAL_MIC_ID 1
+
+    uint8_t decimation_inshift_mic0_read_value = 0;
+    uint8_t decimation_inshift_mic1_read_value = 0;
+    uint8_t decimation_inshift_calculated_value = 0;
+
+    uint8_t decimation_inshift_value_mic0 = (uint8_t)get_dec_inshift_value();
+    uint8_t decimation_inshift_offset = (uint8_t)get_dec_inshift_offset();
+
+    // Catch the case where we don't make any changes; just bail out.
+    if((decimation_inshift_value_mic0 == DEC_INSHIFT_VALUE_DEFAULT) &&
+       (decimation_inshift_offset == DEC_INSHIFT_OFFSET_DEFAULT )){
+        return;
+    }
+
+    // Read the decimation_inshift values for both mics
+    ndp_core2_platform_tiny_audio_config_get(INSHIFT_AUDIO_ID, INSHIFT_SINGLE_MIC_ID, 0, &decimation_inshift_mic0_read_value);
+    ndp_core2_platform_tiny_audio_config_get(INSHIFT_AUDIO_ID, INSHIFT_DUAL_MIC_ID, 0, &decimation_inshift_mic1_read_value);
+
+    ei_printf("    Decimation Inshift Details\n");
+    ei_printf("    Model Decimation Inshift Mic0: %d\n", decimation_inshift_mic0_read_value);
+    ei_printf("    Model Decimation Inshift Mic1: %d\n", decimation_inshift_mic1_read_value);
+
+    // Check the configuration
+    if(decimation_inshift_value_mic0 != DEC_INSHIFT_VALUE_DEFAULT){
+
+        ei_printf("DECIMATION_INSHIFT_VALUE     : %d\n", decimation_inshift_value_mic0);
+        decimation_inshift_calculated_value = decimation_inshift_value_mic0;
+
+    }
+    else { // User did not define a custom decimation_inshift value, apply the offset.  Note the default
+           // value for the offset is zero.  So we can safely apply this offset without any validation.  We'll
+           // verify the final value below before applying them to the NDP120.
+
+        ei_printf("DECIMATION_INSHIFT_OFFSET    : %d\n", decimation_inshift_offset);
+        decimation_inshift_calculated_value = decimation_inshift_mic0_read_value + decimation_inshift_offset;
+
+    }
+
+    // Check for invalid low value
+    if(decimation_inshift_calculated_value < DEC_INSHIFT_VALUE_MIN ){
+
+        ei_printf("Warning calculated value %d is below the min allowed value of %d\n", decimation_inshift_calculated_value, DEC_INSHIFT_VALUE_MIN);
+        decimation_inshift_calculated_value = DEC_INSHIFT_VALUE_MIN;
+    }
+
+    // Check for invalid low value
+    else if(decimation_inshift_calculated_value > DEC_INSHIFT_VALUE_MAX){
+
+        ei_printf("Warning calculated value %d is above max allowed value of %d\n", decimation_inshift_calculated_value, DEC_INSHIFT_VALUE_MAX);
+        decimation_inshift_calculated_value = DEC_INSHIFT_VALUE_MAX;
+    }
+
+    ei_printf("Setting new value to %d\n", decimation_inshift_calculated_value);
+
+    // Write the new value(s) into the NDP120
+    ndp_core2_platform_tiny_audio_config_set(INSHIFT_AUDIO_ID, INSHIFT_SINGLE_MIC_ID, &decimation_inshift_calculated_value);
+    ei_printf("Final Decimation Inshift Mic0: %d\n", decimation_inshift_calculated_value);
+
+
+    // Only update the mic1 value if one was set in the model
+    if(0 != decimation_inshift_mic1_read_value){
+        ndp_core2_platform_tiny_audio_config_set(INSHIFT_AUDIO_ID, INSHIFT_DUAL_MIC_ID, &decimation_inshift_calculated_value);
+        ei_printf("Final Decimation Inshift Mic1: %d\n", decimation_inshift_calculated_value);
+    }
+
+    ei_printf("\n");
 }

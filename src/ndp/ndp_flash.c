@@ -61,12 +61,12 @@ int ndp_flash_init(void)
     int ret;
     ret = ndp_core2_platform_tiny_mspi_config();
     if (ret) {
-        printf("**** mspi init failed: %d\n", ret);
+        //printf("**** mspi init failed: %d\n", ret);
     }
 	/* set HOLD pin */
 	ret = ndp_core2_platform_tiny_gpio_config(FLASH_PIN_HOLD, NDP_CORE2_CONFIG_VALUE_GPIO_DIR_OUT, GPIO_LEVEL_HIGH);
 	if (ret) {
-        printf("**** set gpio failed: %d\n", ret);
+        //printf("**** set gpio failed: %d\n", ret);
     }
     return ret;
 }
@@ -388,7 +388,7 @@ static int ndp_flash_program_firmware(uint32_t address, char * file_name)
     char *process_ptr = NULL;
 
     package_len = get_synpkg_size(file_name);
-	printf("FLASH programming %s %ld Bytes \n",file_name, package_len);
+	//printf("FLASH programming %s %ld Bytes \n",file_name, package_len);
 
     while (split_index < package_len) {
 		if ((package_len-split_index) > FLASH_SPLIT_SIZE) {
@@ -405,10 +405,11 @@ static int ndp_flash_program_firmware(uint32_t address, char * file_name)
 		burn_addr += split_len;
 		
         process_ptr = flash_process_percent(split_index, package_len, split_len);
-        if (process_ptr) printf("%s", process_ptr);
+        //if (process_ptr)
+        //    printf("%s", process_ptr);
     }
 
-    printf("...100%% \n");
+    //printf("...100%% \n");
     return ret;
 }
 
@@ -423,7 +424,7 @@ int ndp_flash_program_infos(void)
 	//ndp_flash_4kblock_erase(FLASH_INFO_ADDR);
 	ndp_flash_write_block(FLASH_INFO_ADDR, &info, sizeof(info));
 
-	printf("Store the configurations to Flash: %d bytes\n", sizeof(info));
+	//printf("Store the configurations to Flash: %d bytes\n", sizeof(info));
 
 	return 0;
 }
@@ -433,13 +434,13 @@ int ndp_flash_program_all_fw(void)
     int ret;
 	char flash_file_name[] = "temp_flash.bin";
 
-	printf("FLASH chip erase ...\n");
+	//printf("FLASH chip erase ...\n");
 	ret = ndp_flash_chip_erase();
 	if (ret) return ret;
 
-    printf("FLASH programming starts ...\n");
+    //printf("FLASH programming starts ...\n");
 	//concatenate files
-	printf("concatenate synpkg files\n");
+	//printf("concatenate synpkg files\n");
 	cat_file(mcu_file_name, flash_file_name, 0);
 	cat_file(dsp_file_name, flash_file_name, 1);
 	cat_file(model_file_name, flash_file_name, 1);
@@ -449,7 +450,7 @@ int ndp_flash_program_all_fw(void)
     if (ret) return ret;
 
 	//remove file
-	printf("remove %s \n", flash_file_name);
+	//printf("remove %s \n", flash_file_name);
 	remove_file(flash_file_name);
 
 	ret = ndp_flash_program_infos();

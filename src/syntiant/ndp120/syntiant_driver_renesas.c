@@ -25,6 +25,13 @@ int syntiant_ndp_spi_init(void *d, int spi_default_speed, int spi_read_delay)
     return s;
 }
 
+int syntiant_ndp_spi_speed(int spifd, uint32_t spi_speed)
+{
+    (void)spifd;
+    (void)spi_speed;
+    return 0;
+}
+
 static int syntiant_ndp_spi_read(uint8_t spi_cmd, uint8_t *read_buff, int count)
 {
     int s = 0;
@@ -170,7 +177,7 @@ void printf_array(uint8_t * array, int cnt)
 {
     int i;
 
-    printf("%s\r\n",__func__);
+    //printf("%s\r\n",__func__);
 
     for(i=0; i< cnt; i++)
         printf("0x%2x\r\n", array[i]);
@@ -200,8 +207,8 @@ void test_ndp_spi(void)
     // read 0x20000000
     addr = 0x20000000;
     syntiant_ndp_transfer(NULL, NDP_MCU_SPACE, addr, NULL, rx, 4);
-    printf("First read\r\n");
-    printf_array(rx, 4);
+    //printf("First read\r\n");
+    //printf_array(rx, 4);
 
     // write 0xDEADBEEF  to  0x20000000
     addr = 0x20000000;
@@ -215,6 +222,6 @@ void test_ndp_spi(void)
     // read 0x20000000
     addr = 0x20000000;
     syntiant_ndp_transfer(NULL, NDP_MCU_SPACE, addr, NULL, rx, 4);
-    printf("Second read\r\n");
-    printf_array(rx, 4);
+    //printf("Second read\r\n");
+    //printf_array(rx, 4);
 }

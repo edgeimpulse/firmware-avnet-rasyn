@@ -15,16 +15,49 @@
  */
 
 /* Include ----------------------------------------------------------------- */
-#include "led_threadx.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "common_data.h"
+#include "led_thread_interface.h"
 #include "ingestion-sdk-platform/rasyn/ei_device_rasyn.h"
 #include "peripheral/led.h"
 #include <stdio.h>
+
+#define LED_TASK_STACK_SIZE_BYTE        (512u)
+
+/* FreeRTOS module */
+static TaskHandle_t led_pcdc_thread;
+
+static void led_thread_entry(void *pvParameters);
+
+/* Public functions -------------------------------------------------------- */
+/**
+ * @brief Start ndp thread
+ */
+void led_thread_start(void)
+{
+    BaseType_t retval;
+    /* create a task to send data via usb */
+    retval = xTaskCreate(led_thread_entry,
+        (const char*) "NDP Thread",
+        LED_TASK_STACK_SIZE_BYTE / 4, // in words
+        NULL, //pvParameters
+        configMAX_PRIORITIES - 1, //uxPriority
+        &led_pcdc_thread);
+
+    if (retval != pdTRUE) {
+        // error !!
+        while(1){};
+    }
+
+}
 
 /**
  * @brief LED IDLE Thread entry function
  * @param pvParameters contains TaskHandle_t
  */
-void led_threadx_entry(void *pvParameters)
+static void led_thread_entry(void *pvParameters)
 {
     EiRASyn         *dev = static_cast<EiRASyn*>(EiDeviceInfo::get_device());
     EiRASynState    old_status = EiRASynStateIdle;

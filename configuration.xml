@@ -176,6 +176,10 @@
       <description>FreeRTOS - Memory Management - Heap 4</description>
       <originalPack>Amazon.FreeRTOS-Kernel.10.4.6+fsp.4.2.0.pack</originalPack>
     </component>
+    <component apiversion="" class="HAL Drivers" condition="" group="all" subgroup="r_dmac" variant="" vendor="Renesas" version="4.2.0">
+      <description>Direct Memory Access Controller</description>
+      <originalPack>Renesas.RA.4.2.0.pack</originalPack>
+    </component>
     <component apiversion="" class="HAL Drivers" condition="" group="all" subgroup="r_icu" variant="" vendor="Renesas" version="4.2.0">
       <description>External Interrupt</description>
       <originalPack>Renesas.RA.4.2.0.pack</originalPack>
@@ -380,14 +384,14 @@
       <property id="module.driver.basic.name" value="g_basic"/>
       <property id="module.driver.usb_basic.usb_mode" value="module.driver.usb_basic.usb_mode.host"/>
       <property id="module.driver.usb_basic.usb_speed" value="module.driver.usb_basic.usb_speed.fs"/>
-      <property id="module.driver.usb_basic.usb_modulenumber" value="module.driver.usb_basic.usb_modulenumber.1"/>
+      <property id="module.driver.usb_basic.usb_modulenumber" value="module.driver.usb_basic.usb_modulenumber.0"/>
       <property id="module.driver.usb_basic.usb_classtype" value="module.driver.usb_basic.usb_classtype.pcdc"/>
       <property id="module.driver.usb_basic.p_usb_reg" value="g_usb_descriptor"/>
       <property id="module.driver.usb_basic.complience_cb" value="NULL"/>
-      <property id="module.driver.usb_basic.ipl" value="board.icu.common.irq.priority10"/>
-      <property id="module.driver.usb_basic.ipl_r" value="board.icu.common.irq.priority10"/>
-      <property id="module.driver.usb_basic.ipl_d0" value="board.icu.common.irq.priority10"/>
-      <property id="module.driver.usb_basic.ipl_d1" value="board.icu.common.irq.priority10"/>
+      <property id="module.driver.usb_basic.ipl" value="board.icu.common.irq.priority13"/>
+      <property id="module.driver.usb_basic.ipl_r" value="board.icu.common.irq.priority13"/>
+      <property id="module.driver.usb_basic.ipl_d0" value="board.icu.common.irq.priority13"/>
+      <property id="module.driver.usb_basic.ipl_d1" value="board.icu.common.irq.priority13"/>
       <property id="module.driver.usb_basic.hsipl" value="_disabled"/>
       <property id="module.driver.usb_basic.hsipl_d0" value="_disabled"/>
       <property id="module.driver.usb_basic.hsipl_d1" value="_disabled"/>
@@ -396,6 +400,46 @@
     </module>
     <module id="module.custom.block_media_pmsc.1186369277">
       <property id="module.driver.rm_block_media.name" value="g_rm_block_media"/>
+    </module>
+    <module id="module.driver.transfer_on_dmac.1923131490">
+      <property id="module.driver.transfer.name" value="g_transfer0"/>
+      <property id="module.driver.transfer.channel" value="0"/>
+      <property id="module.driver.transfer.mode" value="module.driver.transfer.mode.mode_normal"/>
+      <property id="module.driver.transfer.size" value="module.driver.transfer.size.size_2_byte"/>
+      <property id="module.driver.transfer.dest_addr_mode" value="module.driver.transfer.dest_addr_mode.addr_mode_fixed"/>
+      <property id="module.driver.transfer.src_addr_mode" value="module.driver.transfer.src_addr_mode.addr_mode_fixed"/>
+      <property id="module.driver.transfer.repeat_area" value="module.driver.transfer.repeat_area.repeat_area_source"/>
+      <property id="module.driver.transfer.p_dest" value="NULL"/>
+      <property id="module.driver.transfer.p_src" value="NULL"/>
+      <property id="module.driver.transfer.length" value="1"/>
+      <property id="module.driver.transfer.num_blocks" value="0"/>
+      <property id="module.driver.transfer.activation_event" value="_signal.event.usbfs.fifo.1"/>
+      <property id="module.driver.transfer.p_callback" value="NULL"/>
+      <property id="module.driver.transfer.p_context" value="NULL"/>
+      <property id="module.driver.transfer.ipl" value="_disabled"/>
+      <property id="module.driver.transfer.interrupt" value="module.driver.transfer.interrupt.interrupt_end"/>
+      <property id="module.driver.transfer.offset" value="1"/>
+      <property id="module.driver.transfer.src.buffer" value="1"/>
+    </module>
+    <module id="module.driver.transfer_on_dmac.2026979155">
+      <property id="module.driver.transfer.name" value="g_transfer1"/>
+      <property id="module.driver.transfer.channel" value="1"/>
+      <property id="module.driver.transfer.mode" value="module.driver.transfer.mode.mode_normal"/>
+      <property id="module.driver.transfer.size" value="module.driver.transfer.size.size_2_byte"/>
+      <property id="module.driver.transfer.dest_addr_mode" value="module.driver.transfer.dest_addr_mode.addr_mode_fixed"/>
+      <property id="module.driver.transfer.src_addr_mode" value="module.driver.transfer.src_addr_mode.addr_mode_fixed"/>
+      <property id="module.driver.transfer.repeat_area" value="module.driver.transfer.repeat_area.repeat_area_source"/>
+      <property id="module.driver.transfer.p_dest" value="NULL"/>
+      <property id="module.driver.transfer.p_src" value="NULL"/>
+      <property id="module.driver.transfer.length" value="1"/>
+      <property id="module.driver.transfer.num_blocks" value="0"/>
+      <property id="module.driver.transfer.activation_event" value="_signal.event.usbfs.fifo.0"/>
+      <property id="module.driver.transfer.p_callback" value="NULL"/>
+      <property id="module.driver.transfer.p_context" value="NULL"/>
+      <property id="module.driver.transfer.ipl" value="_disabled"/>
+      <property id="module.driver.transfer.interrupt" value="module.driver.transfer.interrupt.interrupt_end"/>
+      <property id="module.driver.transfer.offset" value="1"/>
+      <property id="module.driver.transfer.src.buffer" value="1"/>
     </module>
     <module id="module.driver.pcdc_on_usb.1131662167">
       <property id="module.driver.pcdc.name" value="g_pcdc"/>
@@ -433,6 +477,11 @@
       <property id="rtos.awsfreertos.object.queue.queue_length" value="20"/>
       <property id="rtos.awsfreertos.object.queue.allocation" value="rtos.awsfreertos.object.queue.allocation.static"/>
     </object>
+    <object id="rtos.awsfreertos.object.mutex.211442266">
+      <property id="rtos.awsfreertos.object.mutex.symbol" value="g_sd_mutex"/>
+      <property id="rtos.awsfreertos.object.mutex.type" value="rtos.awsfreertos.object.mutex.type.mutex"/>
+      <property id="rtos.awsfreertos.object.mutex.allocation" value="rtos.awsfreertos.object.mutex.allocation.static"/>
+    </object>
     <context id="_hal.0">
       <stack module="module.driver.ioport_on_ioport.0"/>
       <stack module="module.middleware.rm_freertos_port.0"/>
@@ -448,7 +497,10 @@
       <stack module="module.driver.usb_composite.1089518865">
         <stack module="module.driver.pmsc_on_usb.1818843457" requires="module.driver.r_usb_composite_pmsc_phid.requires.class1">
           <stack module="module.custom.block_media_pmsc.1186369277" requires="module.driver.pmsc_on_usb.requires.rm_block_media"/>
-          <stack module="module.driver.basic_on_usb.708620469" requires="module.driver.basic_on_usb.requires.basic"/>
+          <stack module="module.driver.basic_on_usb.708620469" requires="module.driver.basic_on_usb.requires.basic">
+            <stack module="module.driver.transfer_on_dmac.1923131490" requires="module.driver.basic_on_usb.requires.transfer_tx"/>
+            <stack module="module.driver.transfer_on_dmac.2026979155" requires="module.driver.basic_on_usb.requires.transfer_rx"/>
+          </stack>
         </stack>
         <stack module="module.driver.pcdc_on_usb.1131662167" requires="module.driver.r_usb_composite_pmsc_phid.requires.class2"/>
       </stack>
@@ -458,15 +510,6 @@
       <property id="rtos.awsfreertos.thread.name" value="EiMainThread"/>
       <property id="rtos.awsfreertos.thread.stack" value="32768"/>
       <property id="rtos.awsfreertos.thread.priority" value="3"/>
-      <property id="rtos.awsfreertos.thread.context" value="NULL"/>
-      <property id="rtos.awsfreertos.thread.allocation" value="rtos.awsfreertos.thread.allocation.static"/>
-      <property id="rtos.awsfreertos.thread.secure_context" value="rtos.awsfreertos.thread.secure_context.enable"/>
-    </context>
-    <context id="rtos.awsfreertos.thread.1103567683">
-      <property id="_symbol" value="led_threadx"/>
-      <property id="rtos.awsfreertos.thread.name" value="LED Thread"/>
-      <property id="rtos.awsfreertos.thread.stack" value="1024"/>
-      <property id="rtos.awsfreertos.thread.priority" value="2"/>
       <property id="rtos.awsfreertos.thread.context" value="NULL"/>
       <property id="rtos.awsfreertos.thread.allocation" value="rtos.awsfreertos.thread.allocation.static"/>
       <property id="rtos.awsfreertos.thread.secure_context" value="rtos.awsfreertos.thread.secure_context.enable"/>
@@ -513,9 +556,9 @@
       <property id="config.driver.usb_basic.dblb" value="config.driver.usb_basic.dblb.enable"/>
       <property id="config.driver.usb_basic.cntmd" value="config.driver.usb_basic.cntmd.disable"/>
       <property id="config.driver.usb_basic.ldo_regulator" value="config.driver.usb_basic.ldo_regulator.disable"/>
-      <property id="config.driver.usb_basic.dma" value="config.driver.usb_basic.dma.disable"/>
-      <property id="config.driver.usb_basic.source_address" value="config.driver.usb_basic.source_address.none"/>
-      <property id="config.driver.usb_basic.dest_address" value="config.driver.usb_basic.dest_address.none"/>
+      <property id="config.driver.usb_basic.dma" value="config.driver.usb_basic.dma.enable"/>
+      <property id="config.driver.usb_basic.source_address" value="config.driver.usb_basic.source_address.fs_use"/>
+      <property id="config.driver.usb_basic.dest_address" value="config.driver.usb_basic.dest_address.fs_use"/>
       <property id="config.driver.usb_basic.compliance_mode" value="config.driver.usb_basic.compliance_mode.disable"/>
       <property id="config.driver.usb_basic.tpl_table" value="NULL"/>
     </config>
@@ -583,6 +626,9 @@
       <property id="config.awsfreertos.thread.print_function" value="printf(x)"/>
       <property id="config.awsfreertos.thread.max_length" value="192"/>
       <property id="config.awsfreertos.thread.include_time_and_task" value="config.awsfreertos.thread.include_time_and_task.disabled"/>
+    </config>
+    <config id="config.driver.dmac">
+      <property id="config.driver.dmac.param_checking_enable" value="config.driver.dmac.param_checking_enable.bsp"/>
     </config>
     <config id="config.driver.iic_master">
       <property id="config.driver.iic_master.param_checking_enable" value="config.driver.iic_master.param_checking_enable.bsp"/>

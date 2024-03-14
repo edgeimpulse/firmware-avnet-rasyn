@@ -220,13 +220,16 @@ FSP Configuration
     Double Buffering: Enabled
     Continuous Transfer Mode: Not Supported
     LDO Regulator: Not Supported
-    DMA Support: Disabled
-    DMA Source Address: DMA Disabled
-    DMA Destination Address: DMA Disabled
+    DMA Support: Enabled
+    DMA Source Address: FS Address
+    DMA Destination Address: FS Address
     USB Compliance Test mode: Disabled
     USB TPL table name: NULL
     
   Module "Block Media Custom Implementation"
+  Module "Transfer (r_dmac)"
+    Parameter Checking: Default (BSP)
+    
   Module "USB PCDC (r_usb_pcdc)"
     Bulk In Pipe: USB PIPE1
     Bulk Out Pipe: USB PIPE2
@@ -457,20 +460,60 @@ FSP Configuration
           Name: g_basic
           USB Mode: Peri mode
           USB Speed: Full Speed
-          USB Module Number: USB_IP1 Port
+          USB Module Number: USB_IP0 Port
           USB Device Class: Peripheral Mass Storage Class
           USB Descriptor: g_usb_descriptor
           USB Compliance Callback: NULL
-          USBFS Interrupt Priority: Priority 10
-          USBFS Resume Priority: Priority 10
-          USBFS D0FIFO Interrupt Priority: Priority 10
-          USBFS D1FIFO Interrupt Priority: Priority 10
+          USBFS Interrupt Priority: Priority 13
+          USBFS Resume Priority: Priority 13
+          USBFS D0FIFO Interrupt Priority: Priority 13
+          USBFS D1FIFO Interrupt Priority: Priority 13
           USBHS Interrupt Priority: Not Supported
           USBHS D0FIFO Interrupt Priority: Not Supported
           USBHS D1FIFO Interrupt Priority: Not Supported
           USB RTOS Callback: usb_composite_callback
           USB Callback Context: g_rm_block_media
           
+          Instance "g_transfer0 Transfer (r_dmac) USBFS FIFO 1 (DMA transfer request 1)"
+            Name: g_transfer0
+            Channel: 0
+            Mode: Block
+            Transfer Size: 2 Bytes
+            Destination Address Mode: Fixed
+            Source Address Mode: Incremented
+            Repeat Area (Unused in Normal Mode): Destination
+            Destination Pointer: USB_DEST_ADDRESS
+            Source Pointer: 0
+            Number of Transfers: 0
+            Number of Blocks (Valid only in Repeat,Block or Repeat-Block Mode): 0
+            Activation Source: USBFS FIFO 1 (DMA transfer request 1)
+            Callback: usb_ip0_d1fifo_callback
+            Context: NULL
+            Transfer End Interrupt Priority: Priority 3
+            Interrupt Frequency: Interrupt after all transfers have completed
+            Offset value (Valid only when address mode is \'Offset\'): 0
+            Source Buffer Size: 1
+            
+          Instance "g_transfer1 Transfer (r_dmac) USBFS FIFO 0 (DMA transfer request 0)"
+            Name: g_transfer1
+            Channel: 1
+            Mode: Block
+            Transfer Size: 2 Bytes
+            Destination Address Mode: Incremented
+            Source Address Mode: Fixed
+            Repeat Area (Unused in Normal Mode): Source
+            Destination Pointer: 0
+            Source Pointer: USB_SRC_ADDRESS
+            Number of Transfers: 0
+            Number of Blocks (Valid only in Repeat,Block or Repeat-Block Mode): 0
+            Activation Source: USBFS FIFO 0 (DMA transfer request 0)
+            Callback: NULL
+            Context: NULL
+            Transfer End Interrupt Priority: Priority 3
+            Interrupt Frequency: Interrupt after all transfers have completed
+            Offset value (Valid only when address mode is \'Offset\'): 0
+            Source Buffer Size: 1
+            
       Instance "g_pcdc USB PCDC (r_usb_pcdc)"
         Name: g_pcdc
         
@@ -479,15 +522,6 @@ FSP Configuration
     Name: EiMainThread
     Stack size (bytes): 32768
     Priority: 3
-    Thread Context: NULL
-    Memory Allocation: Static
-    Allocate Secure Context: Enable
-    
-  Thread "LED Thread"
-    Symbol: led_threadx
-    Name: LED Thread
-    Stack size (bytes): 1024
-    Priority: 2
     Thread Context: NULL
     Memory Allocation: Static
     Allocate Secure Context: Enable
@@ -523,5 +557,10 @@ FSP Configuration
     Symbol: g_new_state_queue
     Item Size (Bytes): 2
     Queue Length (Items): 20
+    Memory Allocation: Static
+    
+  Object "g_sd_mutex Mutex"
+    Symbol: g_sd_mutex
+    Type: Mutex
     Memory Allocation: Static
     

@@ -23,6 +23,7 @@
 #include "ingestion-sdk-platform/rasyn/ei_sd_memory.h"
 #include "ingestion-sdk-platform/sensor/ei_inertial.h"
 #include "bsp_api.h"
+#include "ndp/fat_load.h"
 
 /* Private function prototypes --------------------------------------------- */
 static bool sample_data_callback(const void *sample_buf, uint32_t byteLenght);
@@ -82,8 +83,8 @@ bool ei_imu_start_sampling(void)
 #endif
     };
 
-    if (dev->get_imu_ok() == false) {
-        ei_printf("ERR: error, IMU not avialable for ingestion\r\n");
+    if (motion_running() != CIRCULAR_MOTION_ENABLE) {
+        ei_printf("ERR: error, IMU not available for ingestion\r\n");
         return false;
     }
 
@@ -97,9 +98,6 @@ bool ei_imu_start_sampling(void)
     ei_printf("\tFile name: %s\n", dev->get_sample_label().c_str());
 
     samples_required = (uint32_t)(dev->get_sample_length_ms()/dev->get_sample_interval_ms());
-
-    ei_printf("samples_required %d\n", samples_required);
-
     current_sample = 0;
 
     ei_printf("Starting in 2000 ms... (or until all flash was erased)\n");
@@ -133,13 +131,11 @@ bool ei_imu_start_sampling(void)
 
     const uint16_t max_sample = 10;
     uint32_t sample_read = 0;
-    float buffer[INERTIAL_AXIS_SAMPLED * 10];
+    float buffer[INERTIAL_AXIS_SAMPLED * max_sample];
 
     while(current_sample < samples_required) {
         sample_read = ei_inertial_read_data(buffer, max_sample);
         sample_data_callback((const void *)buffer, sample_read*sizeof(float));
-        //wait on mutex done recording ?
-        ei_sleep(10);
     };
 
     ei_fusion_inertial_setup_recording(false);

@@ -22,14 +22,14 @@ int button_init(void)
     err = R_ICU_ExternalIrqOpen(&g_btn_ext_irq13_ctrl, &g_btn_ext_irq13_cfg);
     if (FSP_SUCCESS != err)
     {
-        printf ("\r\n**R_ICU_ExternalIrqOpen API FAILED**\r\n");
+        //printf ("\r\n**R_ICU_ExternalIrqOpen API FAILED**\r\n");
         return err;
     }
 
     err = R_ICU_ExternalIrqEnable(&g_btn_ext_irq13_ctrl);
     if (FSP_SUCCESS != err)
     {
-        printf ("\r\n**R_ICU_ExternalIrqOpen API FAILED**\r\n");
+        //printf ("\r\n**R_ICU_ExternalIrqOpen API FAILED**\r\n");
         return err;
     }
     return err;

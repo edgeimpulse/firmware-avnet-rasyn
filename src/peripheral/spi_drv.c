@@ -44,7 +44,7 @@ int spi_init(void)
     err = R_SPI_Open (&g_spi1_master_ctrl, &g_spi1_master_cfg);
     if (FSP_SUCCESS != err)
     {
-        printf("** R_SPI_Open API for SPI Master failed ** \r\n");
+        //printf("** R_SPI_Open API for SPI Master failed ** \r\n");
         return err;
     }
 
@@ -100,14 +100,14 @@ int spi_write(uint8_t *data, uint32_t bytes)
     err = R_SPI_Write(&g_spi1_master_ctrl, data, bytes, SPI_BIT_WIDTH_8_BITS);
     if(FSP_SUCCESS != err)
     {
-        printf("Master R_SPI_Write() failed\r\n");
+        //printf("Master R_SPI_Write() failed\r\n");
         return err;
     }
 
     err = validate_spi_event();
     if (FSP_SUCCESS != err)
     {
-        printf("** SPI write validate failed, err=%d ** \r\n", err);
+        //printf("** SPI write validate failed, err=%d ** \r\n", err);
         return err;
     }
 
@@ -124,14 +124,14 @@ int spi_read(uint8_t *buf, uint32_t size)
     err = R_SPI_Read(&g_spi1_master_ctrl, buf, size, SPI_BIT_WIDTH_8_BITS);
     if(FSP_SUCCESS != err)
     {
-        printf("Master R_SPI_Write() failed\r\n");
+        //printf("Master R_SPI_Write() failed\r\n");
         return err;
     }
 
     err = validate_spi_event();
     if (FSP_SUCCESS != err)
     {
-        printf("** SPI write validate failed, err=%d ** \r\n", err);
+        //printf("** SPI write validate failed, err=%d ** \r\n", err);
         return err;
     }
 
@@ -148,14 +148,14 @@ int spi_write_read(uint8_t *out, uint8_t *in, uint32_t size)
     err = R_SPI_WriteRead(&g_spi1_master_ctrl, out, in, size, SPI_BIT_WIDTH_8_BITS);
     if(FSP_SUCCESS != err)
     {
-        printf("Master R_SPI_Write() failed\r\n");
+        //printf("Master R_SPI_Write() failed\r\n");
         return err;
     }
 
     err = validate_spi_event();
     if (FSP_SUCCESS != err)
     {
-        printf("** SPI write validate failed, err=%d ** \r\n", err);
+        //printf("** SPI write validate failed, err=%d ** \r\n", err);
         return err;
     }
 

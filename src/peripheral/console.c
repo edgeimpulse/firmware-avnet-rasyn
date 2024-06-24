@@ -14,9 +14,13 @@
  *
  */
 
+#include "FreeRTOS.h"
+#include "event_groups.h"
+
 #include "console.h"
 #include "peripheral/usb/usb_pcdc_vcom.h"
 #include "usb_thread_interface.h"
+#include "ei_main_event.h"
 
 #define UART_RX_BUFFER_SIZE         512
 #define RESET_VALUE                 0
@@ -89,15 +93,17 @@ fsp_err_t console_deinit(void)
  */
 void console_callback(uart_callback_args_t *p_args)
 {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
     switch (p_args->event)
     {
         case UART_EVENT_RX_CHAR:
         {
             g_temp_buffer[g_rx_index++] = (uint8_t ) p_args->data;
-            if (p_args->data == CARRIAGE_ASCII)
-            {
+            if (p_args->data == CARRIAGE_ASCII) {
 
                 g_uart_rx_completed = true;
+                xEventGroupSetBitsFromISR(g_ei_main_event_group, EI_EVENT_RX, &xHigherPriorityTaskWoken);
             }
         }
         break;
@@ -117,6 +123,8 @@ void console_callback(uart_callback_args_t *p_args)
         }
         break;
     }
+
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 /**

@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #define LED_TASK_STACK_SIZE_BYTE        (512u)
+#define LED_TASK_PRIORITY               (configMAX_PRIORITIES - 1)
 
 /* FreeRTOS module */
 static TaskHandle_t led_pcdc_thread;
@@ -43,7 +44,7 @@ void led_thread_start(void)
         (const char*) "NDP Thread",
         LED_TASK_STACK_SIZE_BYTE / 4, // in words
         NULL, //pvParameters
-        configMAX_PRIORITIES - 1, //uxPriority
+        LED_TASK_PRIORITY, //uxPriority
         &led_pcdc_thread);
 
     if (retval != pdTRUE) {

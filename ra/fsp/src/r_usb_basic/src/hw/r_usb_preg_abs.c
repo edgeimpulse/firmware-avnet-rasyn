@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright [2020-2022] Renesas Electronics Corporation and/or its affiliates.  All Rights Reserved.
+ * Copyright [2020-2023] Renesas Electronics Corporation and/or its affiliates.  All Rights Reserved.
  *
  * This software and documentation are supplied by Renesas Electronics America Inc. and may only be used with products
  * of Renesas Electronics Corp. and its affiliates ("Renesas").  No other uses are authorized.  Renesas products are
@@ -828,7 +828,7 @@ void usb_pstd_forced_termination (uint16_t pipe, uint16_t status, usb_utr_t * p_
         vPortFree(g_p_usb_pstd_pipe[pipe]);
   #endif                               /* #if (BSP_CFG_RTOS == 1) */
         g_p_usb_pstd_pipe[pipe] = (usb_utr_t *) USB_NULL;
-        usb_cstd_pipe_msg_re_forward(USB_IP0, pipe);
+        usb_cstd_pipe_msg_re_forward(p_utr->ip, pipe);
  #endif                                /* (BSP_CFG_RTOS == 0) */
     }
 }

@@ -162,7 +162,8 @@ static bool at_clear_config(void)
     if (pei_device != nullptr)
     {
         ei_printf("Clearing config and restarting system...\n");
-        pei_device->clear_config();        
+        pei_device->clear_config();
+        //pei_device->init_device_id(); // done in clear config
         ret_val = true;
     }
     else
@@ -452,8 +453,8 @@ static bool at_list_sensors(void)
  */
 static bool at_list_fusion_sensors(void)
 {
-    // we don't fusion any sensor
-    
+    //ei_built_sensor_fusion_list();
+
     return true;
 }
 
@@ -658,7 +659,8 @@ static bool local_read_encode_send_sample_buffer(size_t address, size_t length)
         }
 
         size_out = base64_encode_buffer((char *)buffer, bytes_to_read, (char *)buffer_out, output_size_check);
-        _write(NULL, (char*)buffer_out, size_out);  // direct write to speed up
+        _write(NULL, (char*)buffer_out, size_out);
+        //comms_send((uint8_t*)buffer_out, size_out, 100);   // direct write to speed up
 
         address += bytes_to_read;
         length -= bytes_to_read;

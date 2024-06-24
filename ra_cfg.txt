@@ -24,6 +24,7 @@ FSP Configuration
     Security: SRAM Accessibility: Standby RAM: Regions 7-0 are all Secure.
     Security: BUS Accessibility: Bus Security Attribution Register A: Both Secure and Non-Secure State
     Security: BUS Accessibility: Bus Security Attribution Register B: Both Secure and Non-Secure State
+    Security: Uninitialized Non-Secure Application Fallback: Enable Uninitialized Non-Secure Application Fallback
     Startup C-Cache Line Size: 32 Bytes
     OFS0 register settings: Independent WDT: Start Mode: IWDT is Disabled
     OFS0 register settings: Independent WDT: Timeout Period: 2048 cycles
@@ -138,7 +139,7 @@ FSP Configuration
       P408 15 SCI3_RXD3 - Low None "Peripheral mode" CMOS None "AGT2: AGTOB2; CTSU0: TS04; ETHERC_MII0: ET0_CRS; ETHERC_RMII0: RMII_CRS_DV; GPT_OPS0: GTOWLO; GPT6: GTIOC6B; ICU0: IRQ07; IIC0: SCL0; SCI3: RXD3; SCI3: SCL3; SCI4: CTS4; USB_FS0: USB_ID" WLBT_RXD IO - WLBT_RXD 
       P409 14 SCI3_TXD3 - Low None "Peripheral mode" CMOS None "AGT2: AGTOA2; CTSU0: TS05; ETHERC_MII0: ET0_RX_CLK; ETHERC_RMII0: RMII_RX_ER; GPT_OPS0: GTOWUP; ICU0: IRQ06; SCI3: SDA3; SCI3: TXD3; USB_FS0: USB_EXICEN" WLBT_TXD IO - WLBT_TXD 
       P410 13 ICU0_IRQ05 - - IRQ05 "IRQ mode" - None "AGT1: AGTOB1; CTSU0: TS06; ETHERC_MII0: ET0_ERXD0; ETHERC_RMII0: RMII_RXD1; GPT_OPS0: GTOVLO; GPT9: GTIOC9B; ICU0: IRQ05; SCI0: RXD0; SCI0: SCL0; SCI3: SCK3; SDHI0: SD0DAT1; SPI1: MISOB" NDP_INT IO - NDP_INT 
-      P411 12 SCI3_CTSRTS3 - Low None "Peripheral mode" CMOS None "AGT1: AGTOA1; CTSU0: TS07; ETHERC_MII0: ET0_ERXD1; ETHERC_RMII0: RMII_RXD0; GPT_OPS0: GTOVUP; GPT9: GTIOC9A; ICU0: IRQ04; SCI0: SDA0; SCI0: TXD0; SCI3: CTSRTS3; SDHI0: SD0DAT0; SPI1: MOSIB" WLBT_RTS IO - WLBT_RTS 
+      P411 12 - - - - Disabled - - "AGT1: AGTOA1; CTSU0: TS07; ETHERC_MII0: ET0_ERXD1; ETHERC_RMII0: RMII_RXD0; GPT_OPS0: GTOVUP; GPT9: GTIOC9A; ICU0: IRQ04; SCI0: SDA0; SCI0: TXD0; SCI3: CTSRTS3; SDHI0: SD0DAT0; SPI1: MOSIB" WLBT_RTS None - WLBT_RTS 
       P500 49 - - - - Disabled - - "ADC1: AN116; AGT0: AGTOA0; CAC0: CACREF; GPT_OPS0: GTIU; QSPI0: QSPCLK; SCI5: CTS5; USB_FS0: USB_VBUSEN" - None - "J5_8/Click Shuttle 3" 
       RES 25 SYSTEM0_RES - - - - - - - - IO "Read only" - 
       USBDM 18 USB_FS0_USB_DM - - - - - - - - IO "Read only" - 
@@ -233,7 +234,7 @@ FSP Configuration
   Module "USB PCDC (r_usb_pcdc)"
     Bulk In Pipe: USB PIPE1
     Bulk Out Pipe: USB PIPE2
-    Interrupt Out Pipe: USB PIPE6
+    Interrupt In Pipe: USB PIPE6
     
   FreeRTOS
     General: Custom FreeRTOSConfig.h: 
@@ -268,7 +269,7 @@ FSP Configuration
     General: Message Buffer Length Type: size_t
     Memory Allocation: Support Static Allocation: Enabled
     Memory Allocation: Support Dynamic Allocation: Enabled
-    Memory Allocation: Total Heap Size: 61440
+    Memory Allocation: Total Heap Size: 122880
     Memory Allocation: Application Allocated Heap: Disabled
     Stats: Generate Run Time Stats: Disabled
     Timers: Use Timers: Enabled
@@ -339,10 +340,10 @@ FSP Configuration
     Instance "g_spi1_master SPI (r_spi)"
       Name: g_spi1_master
       Channel: 1
-      Receive Interrupt Priority: Priority 2
-      Transmit Buffer Empty Interrupt Priority: Priority 2
-      Transfer Complete Interrupt Priority: Priority 2
-      Error Interrupt Priority: Priority 2
+      Receive Interrupt Priority: Priority 9
+      Transmit Buffer Empty Interrupt Priority: Priority 10
+      Transfer Complete Interrupt Priority: Priority 12
+      Error Interrupt Priority: Priority 12
       Operating Mode: Master
       Clock Phase: Data sampling on odd edge, data variation on even edge
       Clock Polarity: Low when idle
@@ -521,7 +522,7 @@ FSP Configuration
     Symbol: ei_main_thread
     Name: EiMainThread
     Stack size (bytes): 32768
-    Priority: 3
+    Priority: 2
     Thread Context: NULL
     Memory Allocation: Static
     Allocate Secure Context: Enable
@@ -562,5 +563,9 @@ FSP Configuration
   Object "g_sd_mutex Mutex"
     Symbol: g_sd_mutex
     Type: Mutex
+    Memory Allocation: Static
+    
+  Object "g_ei_main_event_group Event Group"
+    Symbol: g_ei_main_event_group
     Memory Allocation: Static
     

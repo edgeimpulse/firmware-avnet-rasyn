@@ -14,14 +14,19 @@
  *
  */
 
+#include "FreeRTOS.h"
+#include "event_groups.h"
+#include "ei_main_event.h"
+
 #include "usb_thread_interface.h"
 #include "peripheral/usb/usb_pcdc_vcom.h"
 #include "portmacro.h"
 #include <string.h>
 
-#define TASK_STACK_SIZE_BYTE        (8192U)
+#define USB_TASK_STACK_SIZE_BYTE        (8192u)
+#define USB_TASK_PRIORITY               (configMAX_PRIORITIES - 2)
+#define UART_RX_BUFFER_SIZE             (2048u)
 
-#define UART_RX_BUFFER_SIZE         2048
 static uint8_t g_temp_buffer[UART_RX_BUFFER_SIZE] = {0};
 
 /* Counter to update g_temp_buffer index */
@@ -40,9 +45,9 @@ void start_usb_pcdc_thread(void)
     /* create a task to send data via usb */
     xTaskCreate(usb_thread_entry,
         (const char*) "USB PCDC Thread",
-        TASK_STACK_SIZE_BYTE / 4, // in words
+        USB_TASK_STACK_SIZE_BYTE / 4, // in words
         NULL, //pvParameters
-        2, //uxPriority
+        USB_TASK_PRIORITY, //uxPriority,
         &usb_pcdc_thread);
 }
 
@@ -132,6 +137,7 @@ static void usb_read(void)
 {
     uint32_t read = 0;
     if (comms_read(&g_temp_buffer[0], &read, portMAX_DELAY) == FSP_SUCCESS) {
+        xEventGroupSetBits(g_ei_main_event_group, EI_EVENT_RX);
         g_rx_index += read;
     }
 }

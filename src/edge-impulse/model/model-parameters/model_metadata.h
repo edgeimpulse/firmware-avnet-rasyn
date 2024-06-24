@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #define EI_CLASSIFIER_NONE                       255
 #define EI_CLASSIFIER_UTENSOR                    1
@@ -57,10 +58,10 @@
 #define EI_CLASSIFIER_DATATYPE_UINT8             3
 #define EI_CLASSIFIER_DATATYPE_INT8              9
 
-#define EI_CLASSIFIER_PROJECT_ID                 118064
-#define EI_CLASSIFIER_PROJECT_OWNER              "Edge Impulse Inc."
-#define EI_CLASSIFIER_PROJECT_NAME               "Syntiant NDP120 Audio"
-#define EI_CLASSIFIER_PROJECT_DEPLOY_VERSION     4
+#define EI_CLASSIFIER_PROJECT_ID                 412552
+#define EI_CLASSIFIER_PROJECT_OWNER              "Syntiant"
+#define EI_CLASSIFIER_PROJECT_NAME               "Syntiant-RC-Go-Stop-NDP120"
+#define EI_CLASSIFIER_PROJECT_DEPLOY_VERSION     1
 #define EI_CLASSIFIER_NN_INPUT_FRAME_SIZE        1600
 #define EI_CLASSIFIER_RAW_SAMPLE_COUNT           15488
 #define EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME      1
@@ -76,12 +77,11 @@
 #define EI_CLASSIFIER_SINGLE_FEATURE_INPUT       1
 #define EI_CLASSIFIER_FREQUENCY                  16000
 #define EI_CLASSIFIER_HAS_MODEL_VARIABLES        1
+#define EI_CLASSIFIER_THRESHOLD                  0.6
 
-
-#define EI_CLASSIFIER_OBJECT_DETECTION            0
-#define EI_CLASSIFIER_TFLITE_OUTPUT_DATA_TENSOR   0
-#define EI_CLASSIFIER_OBJECT_DETECTION_LAST_LAYER EI_CLASSIFIER_LAST_LAYER_UNKNOWN
-
+#define EI_CLASSIFIER_OBJECT_DETECTION             0
+#define EI_CLASSIFIER_TFLITE_OUTPUT_DATA_TENSOR    0
+#define EI_CLASSIFIER_OBJECT_DETECTION_LAST_LAYER  EI_CLASSIFIER_LAST_LAYER_UNKNOWN
 
 #define EI_CLASSIFIER_TFLITE_INPUT_DATATYPE         EI_CLASSIFIER_DATATYPE_FLOAT32
 #define EI_CLASSIFIER_TFLITE_OUTPUT_DATATYPE        EI_CLASSIFIER_DATATYPE_FLOAT32
@@ -120,8 +120,10 @@
 #define EI_CLASSIFIER_SLICE_SIZE                 (EI_CLASSIFIER_RAW_SAMPLE_COUNT / EI_CLASSIFIER_SLICES_PER_MODEL_WINDOW)
 
 #define EI_STUDIO_VERSION_MAJOR             1
-#define EI_STUDIO_VERSION_MINOR             43
-#define EI_STUDIO_VERSION_PATCH             2
+#define EI_STUDIO_VERSION_MINOR             50
+#define EI_STUDIO_VERSION_PATCH             13
+
+#define EI_CLASSIFIER_HR_ENABLED            0
 
 #if ((EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_TFLITE) ||      (EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_DRPAI)) &&      EI_CLASSIFIER_USE_FULL_TFLITE == 1
 
@@ -137,6 +139,11 @@
 #error "Cannot use full TensorFlow Lite with EON"
 #endif
 #endif // ((EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_TFLITE) || (EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_DRPAI)) && EI_CLASSIFIER_USE_FULL_TFLITE == 1
+
+typedef struct {
+    const char *name;
+    int axis;
+} ei_dsp_named_axis_t;
 
 typedef struct {
     uint32_t block_id;
@@ -157,6 +164,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     const char * channels;
 } ei_dsp_config_image_t;
 
@@ -164,6 +173,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     int num_cepstral;
     float frame_length;
     float frame_stride;
@@ -180,6 +191,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     float frame_length;
     float frame_stride;
     int num_filters;
@@ -222,6 +235,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     float frame_length;
     float frame_stride;
     int fft_length;
@@ -233,6 +248,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     float frame_length;
     float frame_stride;
     int num_filters;
@@ -251,5 +268,12 @@ typedef struct {
     bool scaling_raw;
     bool padding;
 } ei_dsp_config_imu_syntiant_t;
+
+typedef struct {
+    uint32_t block_id;
+    uint16_t implementation_version;
+    int axes;
+    const char * ppg_ecg;
+} ei_dsp_config_hr_t;
 
 #endif // _EI_CLASSIFIER_MODEL_METADATA_H_

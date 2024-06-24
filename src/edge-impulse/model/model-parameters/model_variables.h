@@ -31,12 +31,18 @@
 
 const char* ei_classifier_inferencing_categories[] = { "go", "stop", "z_openset" };
 
-uint8_t ei_dsp_config_23_axes[] = { 0 };
-const uint32_t ei_dsp_config_23_axes_size = 1;
-ei_dsp_config_audio_syntiant_t ei_dsp_config_23 = {
-    23, // uint32_t blockId
+ei_dsp_named_axis_t ei_dsp_config_4_named_axes[] = {
+    { .name = "Signal", .axis = 0 }
+};
+size_t ei_dsp_config_4_named_axes_size = 1;
+uint8_t ei_dsp_config_4_axes[] = { 0 };
+const uint32_t ei_dsp_config_4_axes_size = 1;
+ei_dsp_config_audio_syntiant_t ei_dsp_config_4 = {
+    4, // uint32_t blockId
     1, // int implementationVersion
     1, // int length of axes
+    ei_dsp_config_4_named_axes, // named axes
+    ei_dsp_config_4_named_axes_size, // size of the named axes array
     0.032f, // float frame_length
     0.024f, // float frame_stride
     40, // int num_filters
@@ -57,5 +63,6 @@ const ei_model_performance_calibration_t ei_calibration = {
     (int32_t)(EI_CLASSIFIER_RAW_SAMPLE_COUNT / ((EI_CLASSIFIER_FREQUENCY > 0) ? EI_CLASSIFIER_FREQUENCY : 1)) * 500, /* Half of model window */
     0   /* Don't use flags */
 };
+
 
 #endif // _EI_CLASSIFIER_MODEL_METADATA_H_

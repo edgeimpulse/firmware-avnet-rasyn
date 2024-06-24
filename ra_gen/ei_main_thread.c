@@ -34,7 +34,7 @@ void ei_main_thread_create(void)
                                         ei_main_thread_func,
                                         (const char*) "EiMainThread", 32768 / 4, // In words, not bytes
                                         (void*) &ei_main_thread_parameters, //pvParameters
-                                        3,
+                                        2,
 #if 1
                                         (StackType_t*) &ei_main_thread_stack,
                                         (StaticTask_t*) &ei_main_thread_memory

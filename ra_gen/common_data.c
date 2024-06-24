@@ -93,6 +93,11 @@ SemaphoreHandle_t g_sd_mutex;
 StaticSemaphore_t g_sd_mutex_memory;
 #endif
 void rtos_startup_err_callback(void *p_instance, void *p_data);
+EventGroupHandle_t g_ei_main_event_group;
+#if 1
+StaticEventGroup_t g_ei_main_event_group_memory;
+#endif
+void rtos_startup_err_callback(void *p_instance, void *p_data);
 void g_common_init(void)
 {
     g_ndp_event_group =
@@ -204,5 +209,15 @@ void g_common_init(void)
     if (NULL == g_sd_mutex)
     {
         rtos_startup_err_callback (g_sd_mutex, 0);
+    }
+    g_ei_main_event_group =
+#if 1
+            xEventGroupCreateStatic (&g_ei_main_event_group_memory);
+#else
+                xEventGroupCreate();
+                #endif
+    if (NULL == g_ei_main_event_group)
+    {
+        rtos_startup_err_callback (g_ei_main_event_group, 0);
     }
 }

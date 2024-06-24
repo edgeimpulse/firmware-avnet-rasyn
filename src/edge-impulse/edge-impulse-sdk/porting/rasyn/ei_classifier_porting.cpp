@@ -58,7 +58,7 @@ uint64_t ei_read_timer_us() {
 
 __attribute__((weak)) void ei_printf(const char *format, ...) {
 
-    char buffer[256] = {0};
+    char buffer[512] = {0};
     int length;
     va_list myargs;
     va_start(myargs, format);

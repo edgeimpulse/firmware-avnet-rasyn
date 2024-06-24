@@ -13,7 +13,7 @@
 #include "common_data.h"
 #define MY_CHAR_ARRAY_SIZE 64
 #define AWS_ENDPOINT_STRING_SIZE 128
-
+#define MODE_DESCRIPTION_LEN 64
 
 #define MCU_FILE_NAME           "mcu_fw_120.synpkg"
 #define DSP_FILE_NAME           "dsp_firmware.synpkg"
@@ -25,12 +25,12 @@
 #define DEVICE_PUBLIC_KEY_FILENAME  "pk_DEVICE_NAME.pem"
 
 #define BLE_DEFAULT_NAME "DA16600-"
-#define DEC_INSHIFT_VALUE_DEFAULT   11
-#define DEC_INSHIFT_VALUE_MIN       7
-#define DEC_INSHIFT_VALUE_MAX       13
-#define DEC_INSHIFT_OFFSET_DEFAULT  0
+#define DEC_INSHIFT_VALUE_DEFAULT -100
+#define DEC_INSHIFT_VALUE_MIN 7
+#define DEC_INSHIFT_VALUE_MAX 13
+#define DEC_INSHIFT_OFFSET_DEFAULT 0
 
-#define LED_EVENT_NUM               10
+#define LED_EVENT_NUM           10
 
 enum FW_LOAD_TYPE {
 	BOOT_MODE_FLASH = 0,
@@ -58,6 +58,12 @@ enum LOW_POWER_MODE_TYPE {
 enum CIRCULAR_MOTION_TYPE {
     CIRCULAR_MOTION_ENABLE = 0,
     CIRCULAR_MOTION_DISABLE = 1,
+};
+
+enum EVENT_WATCH_TYPE {
+    WATCH_TYPE_NONE = 0,
+    WATCH_TYPE_AUDIO = 0x1,
+    WATCH_TYPE_MOTION = 0x2,
 };
 
 enum IMU_FUNC_TYPE {
@@ -131,10 +137,12 @@ struct config_ini_items {
 	char aws_sub_topic[MY_CHAR_ARRAY_SIZE];     /** [AWS]-->MQTT_Sub_Topic **/
 	int dec_inshift_value;
 	int dec_inshift_offset;
+
+    char mode_description[MODE_DESCRIPTION_LEN];
+    int imu_conversion_enabled;                 /** [IMU Recording Format]-->Convert_Data **/
 };
 
 extern struct config_ini_items config_items;
-extern int mode_circular_motion;
 extern char mcu_file_name[32];
 extern char dsp_file_name[64];
 extern char model_file_name[64];
@@ -151,12 +159,14 @@ uint32_t get_synpkg_size(char * file_name);
 uint32_t read_synpkg_block(char * file_name, uint32_t offset, uint8_t *buff,  uint32_t split_len);
 int check_sdcard_env(void);
 uint32_t write_wav_file(char * file_name, uint8_t *buff,  uint32_t len,  int header);
-uint32_t write_sensor_file(char * file_name, uint32_t sample_size, int16_t *acc_samples, int header);
+uint32_t write_sensor_file(char * file_name, uint32_t sample_size, int16_t *acc_samples, int header, float *acc_converted_samples);
 #if 1
 void write_extraction_file_end(void);
 #endif
 uint32_t get_synpkg_config_info( void );
 uint32_t get_synpkg_boot_mode( void );
+uint32_t get_event_watch_mode();
+void set_event_watch_mode(uint32_t watch_mode);
 uint32_t get_sdcard_total_sectors( void );
 uint32_t get_sdcard_slot_status( void );
 int get_print_console_type( void );
@@ -185,10 +195,12 @@ char* get_aws_endpoint( void );
 char* get_aws_deviceId( void );
 char* get_aws_sub_topic( void );
 char* get_aws_pub_topic( void );
+char* get_mode_description( void );
+bool is_imu_convertion_enabled( void );
 
 uint32_t cat_file(char * src_file, char * dst_file, int flag);
 uint32_t remove_file(char * file_name);
-int motion_running(void);
+
 
 #ifdef __cplusplus
 }

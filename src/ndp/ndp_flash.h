@@ -9,8 +9,8 @@
 #include "fat_load.h"
 
 /* mspi ssb */
-#define MSPI_FLASH_SSB         0
-#define MSPI_IMU_SSB             1
+#define MSPI_FLASH_SSB                  0
+#define MSPI_IMU_SSB                    1
 /* The address of storing */
 #define FLASH_MCU_ADDR                  0x0
 #define FLASH_MCU_LENGTH                21612
@@ -73,18 +73,18 @@ enum SPI_FLASH_TRANSFER_TYPE {
 typedef struct config_data_in_flash {
 	unsigned short PINcode;
 	/* store items for ndp */
-	int ndp_mode_motion;
+	uint32_t watch_mode;
 	/* store items from config.ini */
 	struct config_ini_items cfg;
 }config_data_in_flash_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 int ndp_flash_init(void);
 uint16_t ndp_flash_get_deviceid(void);
 uint32_t ndp_flash_get_JEDEC_ID(void);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int ndp_flash_fast_read(uint32_t address, uint8_t *buff, uint32_t length);
 int ndp_flash_page_erase(uint32_t address);

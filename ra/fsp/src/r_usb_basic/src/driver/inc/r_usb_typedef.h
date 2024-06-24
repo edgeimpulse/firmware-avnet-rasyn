@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright [2020-2022] Renesas Electronics Corporation and/or its affiliates.  All Rights Reserved.
+ * Copyright [2020-2023] Renesas Electronics Corporation and/or its affiliates.  All Rights Reserved.
  *
  * This software and documentation are supplied by Renesas Electronics America Inc. and may only be used with products
  * of Renesas Electronics Corp. and its affiliates ("Renesas").  No other uses are authorized.  Renesas products are
@@ -67,13 +67,18 @@ typedef void        (* usb_cb_t)(struct usb_utr *, uint16_t, uint16_t);
 
 typedef struct usb_utr
 {
-    usb_mh_t     msghead;                      /* Message header (for SH-solution) */
-    usb_cb_t     complete;                     /* Call Back Function Info */
-    void const * p_tranadr;                    /* Transfer data Start address */
-    uint32_t     read_req_len;                 /* Read Request Length */
-    uint32_t     tranlen;                      /* Transfer data length */
-    uint16_t   * p_setup;                      /* Setup packet(for control only) */
-    void       * p_usr_data;
+    usb_mh_t     msghead;              /* Message header (for SH-solution) */
+    usb_cb_t     complete;             /* Call Back Function Info */
+    void const * p_tranadr;            /* Transfer data Start address */
+#if (BSP_CFG_RTOS == 1)                /* Azure RTOS */
+ #if (USB_CFG_DMA == USB_CFG_ENABLE)
+    void const * p_tranadr_hold;
+ #endif /* #if (USB_CFG_DMA == USB_CFG_ENABLE) */
+#endif /* (BSP_CFG_RTOS == 1) */
+    uint32_t   read_req_len;                   /* Read Request Length */
+    uint32_t   tranlen;                        /* Transfer data length */
+    uint16_t * p_setup;                        /* Setup packet(for control only) */
+    void     * p_usr_data;
 #if (BSP_CFG_RTOS != 0)
     usb_hdl_t cur_task_hdl;                    /* Task Handle */
 #endif /* #if (BSP_CFG_RTOS != 0) */
@@ -245,17 +250,18 @@ typedef enum e_usb_class_internal
     USB_CLASS_INTERNAL_PHID2,          ///< PHID2 Class     5
     USB_CLASS_INTERNAL_PAUD,           ///< PAUD Class      6
     USB_CLASS_INTERNAL_PPRN,           ///< PPRN Class      7
-    USB_CLASS_INTERNAL_PVND,           ///< PVND Class      8
-    USB_CLASS_INTERNAL_HCDC,           ///< HCDC Class      9
-    USB_CLASS_INTERNAL_HCDCC,          ///< HCDCC Class     10
-    USB_CLASS_INTERNAL_HHID,           ///< HHID Class      11
-    USB_CLASS_INTERNAL_HVND,           ///< HVND Class      12
-    USB_CLASS_INTERNAL_HMSC,           ///< HMSC Class      13
-    USB_CLASS_INTERNAL_PMSC,           ///< PMSC Class      14
-    USB_CLASS_INTERNAL_HPRN,           ///< HPRN Class      15
-    USB_CLASS_INTERNAL_HUVC,           ///< HUVC Class      16
-    USB_CLASS_INTERNAL_REQUEST,        ///< USB Class Request      17
-    USB_CLASS_INTERNAL_END             ///< USB Class       18
+    USB_CLASS_INTERNAL_DFU,            ///< DFU Class       8
+    USB_CLASS_INTERNAL_PVND,           ///< PVND Class      9
+    USB_CLASS_INTERNAL_HCDC,           ///< HCDC Class      10
+    USB_CLASS_INTERNAL_HCDCC,          ///< HCDCC Class     11
+    USB_CLASS_INTERNAL_HHID,           ///< HHID Class      12
+    USB_CLASS_INTERNAL_HVND,           ///< HVND Class      13
+    USB_CLASS_INTERNAL_HMSC,           ///< HMSC Class      14
+    USB_CLASS_INTERNAL_PMSC,           ///< PMSC Class      15
+    USB_CLASS_INTERNAL_HPRN,           ///< HPRN Class      16
+    USB_CLASS_INTERNAL_HUVC,           ///< HUVC Class      17
+    USB_CLASS_INTERNAL_REQUEST,        ///< USB Class Request      18
+    USB_CLASS_INTERNAL_END,            ///< USB Class       19
 } usb_class_internal_t;
 
 /** Common macro for FSP header files. There is also a corresponding FSP_HEADER macro at the top of this file. */

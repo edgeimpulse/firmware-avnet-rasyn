@@ -13,6 +13,7 @@
  * limitations under the License.
  *
  */
+
 /* Include ----------------------------------------------------------------- */
 #include "flash_handler.h"
 #include "hal_data.h"

@@ -13,6 +13,7 @@
  * limitations under the License.
  *
  */
+
 #ifndef INGESTION_SDK_PLATFORM_SENSORS_EI_INERTIAL_SENSOR_H_
 #define INGESTION_SDK_PLATFORM_SENSORS_EI_INERTIAL_SENSOR_H_
 
@@ -28,6 +29,6 @@
 extern bool ei_inertial_init(void);
 extern int ei_fusion_inertial_setup_recording(bool start);
 extern void ei_fusion_inertial_test(void);
-extern uint32_t ei_inertial_read_data(float* buffer, uint32_t max_sample);
+extern uint32_t ei_inertial_read_data(float* buffer, uint32_t max_sample, uint32_t current_sample);
 
 #endif /* INGESTION_SDK_PLATFORM_SENSORS_EI_INERTIAL_SENSOR_H_ */

@@ -27,7 +27,6 @@ extern "C" {
 
 #define BSP_CORTEX_VECTOR_TABLE_ENTRIES    (16U)
 #define BSP_VECTOR_TABLE_MAX_ENTRIES       (112U)
-#define BSP_MCU_VBATT_SUPPORT              (1)
 
 #if defined(_RA_TZ_SECURE)
             #define BSP_TZ_SECURE_BUILD           (1)
@@ -296,6 +295,11 @@ extern "C" {
 /* Security Attribution Register B for BUS Control registers. */
 #ifndef BSP_TZ_CFG_BUSSARB
 #define BSP_TZ_CFG_BUSSARB (0xFFFFFFFFU)
+#endif
+
+/* Enable Uninitialized Non-Secure Application Fallback. */
+#ifndef BSP_TZ_CFG_NON_SECURE_APPLICATION_FALLBACK
+#define BSP_TZ_CFG_NON_SECURE_APPLICATION_FALLBACK (1U)
 #endif
 
 #define OFS_SEQ1 0xA001A001 | (1 << 1) | (3 << 2)

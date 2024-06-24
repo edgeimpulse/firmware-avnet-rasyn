@@ -24,6 +24,7 @@
 #include "ndp/ndp_irq_service.h"
 #include "peripheral/usb/usb_pcdc_vcom.h"
 #include "inference/ei_run_impulse.h"
+#include "ndp/fat_load.h"
 
 /* Constant ----------------------------------------------------------------- */
 #define IMU_SCALE_DATA              (1)
@@ -69,7 +70,23 @@ int ei_fusion_inertial_setup_recording(bool start)
             ndp_irq_disable();
         }
 
-        /* enable sensor */
+        // disable pdm clk for confusion if audio enabled
+        if (get_event_watch_mode() & WATCH_TYPE_AUDIO) {
+            s = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_NONE);
+            if (s){
+                ei_printf("feature set 0x%x failed %d\r\n", NDP_CORE2_FEATURE_NONE, s);
+            }
+        }
+
+
+        // enable sensor if sensor disable
+        if (!(get_event_watch_mode() & WATCH_TYPE_MOTION)) {
+            s = ndp_core2_platform_tiny_sensor_ctl(EI_FUSION_IMU_SENSOR_INDEX, 1);
+            if (s) {
+                ei_printf("enable sensor[%d] failed: %d\n", EI_FUSION_IMU_SENSOR_INDEX, s);
+            }
+        }
+
         s = ndp_core2_platform_tiny_config_interrupts(
                     NDP_CORE2_INTERRUPT_EXTRACT_READY, 1);
         if (s) {
@@ -83,6 +100,22 @@ int ei_fusion_inertial_setup_recording(bool start)
         if (s) {
             ei_printf("disable extract interrupt failed: %d\n", s);
             return s;
+        }
+
+        // enable pdm clk if audio enabled
+        if (get_event_watch_mode() & WATCH_TYPE_AUDIO) {
+            s = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_PDM);
+            if (s){
+                ei_printf("feature set 0x%x failed %d\r\n", NDP_CORE2_FEATURE_PDM, s);
+            }
+        }
+
+        // disable sensor if sensor disable
+        if (!(get_event_watch_mode() & WATCH_TYPE_MOTION)) {
+            s = ndp_core2_platform_tiny_sensor_ctl(EI_FUSION_IMU_SENSOR_INDEX, 0);
+            if (s) {
+                ei_printf("disable sensor[%d] failed: %d\n", EI_FUSION_IMU_SENSOR_INDEX, s);
+            }
         }
 
         if (ei_run_impulse_is_active() == true) {
@@ -99,16 +132,26 @@ int ei_fusion_inertial_setup_recording(bool start)
  * @param max_sample
  * @return
  */
-uint32_t ei_inertial_read_data(float* buffer, uint32_t max_sample)
+uint32_t ei_inertial_read_data(float* buffer, uint32_t max_sample, uint32_t current_sample)
 {
     t_imu my_imu = {.pdata = buffer, .sample_nr = 0, .max_sample_nr = max_sample};
-    uint32_t sample_size;
+    uint32_t save_sample_size;
+    int max_num_frames;
     uint8_t data_ptr[1024] = {0};
     int s;
 
+    s = ndp_core2_platform_tiny_get_sensor_sample_size(&save_sample_size);
+    if (s) {
+        return s;
+    }
+
     while(max_sample > (my_imu.sample_nr/INERTIAL_AXIS_SAMPLED)) {
+
         s = ndp_core2_platform_tiny_sensor_extract_data(data_ptr,
-            EI_FUSION_IMU_SENSOR_INDEX, icm42670_extraction_cb, &my_imu);
+                EI_FUSION_IMU_SENSOR_INDEX, save_sample_size, max_sample,
+                (!current_sample)?1:0,
+                icm42670_extraction_cb, &my_imu);
+
         if ((s) && (s != NDP_CORE2_ERROR_DATA_REREAD)) {
             printf("sensor extract data failed: %d\n", s);
             break;
@@ -129,8 +172,6 @@ uint32_t ei_inertial_read_data(float* buffer, uint32_t max_sample)
         }
     }
 #endif
-
-    s = ndp_core2_platform_tiny_get_recording_metadata(&sample_size, 0);
 
     return (my_imu.sample_nr);
 }

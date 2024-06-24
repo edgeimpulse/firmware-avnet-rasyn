@@ -383,8 +383,8 @@ const spi_cfg_t g_spi1_master_cfg =
   .eri_irq = FSP_INVALID_VECTOR,
 #endif
 
-  .rxi_ipl = (2),
-  .txi_ipl = (2), .tei_ipl = (2), .eri_ipl = (2),
+  .rxi_ipl = (9),
+  .txi_ipl = (10), .tei_ipl = (12), .eri_ipl = (12),
 
   .operating_mode = SPI_MODE_MASTER,
 

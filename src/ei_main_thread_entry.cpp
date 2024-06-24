@@ -17,9 +17,11 @@
 /* Includes */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "ei_main_thread.h"
+#include "event_groups.h"
 
+#include "ei_main_thread.h"
 #include "ndp_thread_interface.h"
+#include "ei_main_event.h"
 
 #include "peripheral/console.h"
 #include "peripheral/spi_drv.h"
@@ -31,7 +33,7 @@
 #include "ingestion-sdk-platform/rasyn/ei_device_rasyn.h"
 #include "ingestion-sdk-platform/rasyn/ei_at_handlers.h"
 #include "ingestion-sdk-platform/sensor/ei_inertial.h"
-#include "usb_thread_interface.h"
+
 #include "led_thread_interface.h"
 
 /* Private variables -------------------------------------------------------------------- */
@@ -45,6 +47,8 @@ void ei_main_thread_entry(void *pvParameters)
     FSP_PARAMETER_NOT_USED (pvParameters);
     pdev =  static_cast<EiRASyn*>(EiDeviceInfo::get_device());
     bool in_rx_loop = false;
+    char data = 0xFF;
+    EventBits_t   evbits;
 
     R_BSP_PinAccessEnable(); /* Enable access to the PFS registers. */
     R_BSP_PinWrite(LED_USER, BSP_IO_LEVEL_HIGH); /* Turn off User Led */
@@ -55,19 +59,13 @@ void ei_main_thread_entry(void *pvParameters)
 
     /* will create a task if using USB CDC */
     console_init();
-    spi_init();
 
-    init_fatfs();
     button_init();
     ble_uart_init();
 
     R_BSP_SoftwareDelay(100, BSP_DELAY_UNITS_MILLISECONDS);
 
-    /* read config info of ndp firmwares */
-    get_synpkg_config_info();
-
     led_thread_start();
-    start_usb_pcdc_thread();
     ei_inertial_init();
 
     ndp_thread_start();
@@ -82,21 +80,30 @@ void ei_main_thread_entry(void *pvParameters)
     at->print_prompt();
 
     while (1) {
-        /* handle command comming from uart */
-        char data = ei_get_serial_byte(1);
-        in_rx_loop = false;
+        evbits = xEventGroupWaitBits(
+                g_ei_main_event_group,   /* The event group being tested. */
+                EI_EVENT_RX, /* The bits within the event group to wait for. */
+                  pdTRUE,        /* should be cleared before returning. */
+                  pdFALSE,       /* Don't wait for both bits, either bit will do. */
+                  portMAX_DELAY );/* Wait a maximum of 100ms for either bit to be set. */
 
-        while ((uint8_t)data != 0xFF) {
-            if ((ei_run_impulse_is_active() == true) && (data == 'b') && (in_rx_loop == false)) {
-                ei_start_stop_run_impulse(false);
-                at->print_prompt();
-            }
-            in_rx_loop = true;
-            at->handle(data);
+        if (evbits & EI_EVENT_RX) {
+            /* handle command comming from uart */
             data = ei_get_serial_byte(1);
+            in_rx_loop = false;
+
+            while ((uint8_t)data != 0xFF) {
+                if ((ei_run_impulse_is_active() == true) && (data == 'b') && (in_rx_loop == false)) {
+                    ei_start_stop_run_impulse(false);
+                    at->print_prompt();
+                }
+
+                in_rx_loop = true;
+                at->handle(data);
+                data = ei_get_serial_byte(1);
+            }
         }
 
-        vTaskDelay (10);
     }
 
     while (1) {

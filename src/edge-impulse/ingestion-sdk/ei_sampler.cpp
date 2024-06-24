@@ -83,11 +83,6 @@ bool ei_imu_start_sampling(void)
 #endif
     };
 
-    if (motion_running() != CIRCULAR_MOTION_ENABLE) {
-        ei_printf("ERR: error, IMU not available for ingestion\r\n");
-        return false;
-    }
-
     ei_printf("Sampling settings:\n");
     ei_printf("\tInterval: ");
     ei_printf_float((float)dev->get_sample_interval_ms());
@@ -96,6 +91,12 @@ bool ei_imu_start_sampling(void)
     ei_printf("\tName: %s\n", (dev->get_sample_label().c_str()));
     ei_printf("\tHMAC Key: %s\n", (dev->get_sample_hmac_key().c_str()));
     ei_printf("\tFile name: %s\n", dev->get_sample_label().c_str());
+
+    // ingestion not enabled if motion mode
+    if ( !(get_event_watch_mode() & WATCH_TYPE_MOTION)) {
+        ei_printf("ERR: error, IMU not available for ingestion\r\n");
+        return false;
+    }
 
     samples_required = (uint32_t)(dev->get_sample_length_ms()/dev->get_sample_interval_ms());
     current_sample = 0;
@@ -133,8 +134,8 @@ bool ei_imu_start_sampling(void)
     uint32_t sample_read = 0;
     float buffer[INERTIAL_AXIS_SAMPLED * max_sample];
 
-    while(current_sample < samples_required) {
-        sample_read = ei_inertial_read_data(buffer, max_sample);
+    while (current_sample < samples_required) {
+        sample_read = ei_inertial_read_data(buffer, max_sample, current_sample);
         sample_data_callback((const void *)buffer, sample_read*sizeof(float));
     };
 

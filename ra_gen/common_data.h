@@ -18,7 +18,7 @@
 #include "bsp_pin_cfg.h"
 FSP_HEADER
 /** Block Media on Custom Implementation Instance */
-extern rm_block_media_instance_t g_rm_block_media;
+//extern rm_block_media_instance_t g_rm_block_media;
 
 /** Access the Block Media Custom Implementation instance using these structures when calling API functions directly (::p_api is not used). */
 //extern rm_block_media_ctrl_t g_rm_block_media_ctrl;
@@ -47,6 +47,8 @@ extern const external_irq_cfg_t g_btn_ext_irq13_cfg;
 #ifndef button_callback
 void button_callback(external_irq_callback_args_t *p_args);
 #endif
+#define IOPORT_CFG_NAME g_bsp_pin_cfg
+
 /* IOPORT Instance */
 extern const ioport_instance_t g_ioport;
 
@@ -60,6 +62,7 @@ extern SemaphoreHandle_t g_usb_ready;
 extern SemaphoreHandle_t g_binary_semaphore;
 extern QueueHandle_t g_new_state_queue;
 extern SemaphoreHandle_t g_sd_mutex;
+extern EventGroupHandle_t g_ei_main_event_group;
 void g_common_init(void);
 FSP_FOOTER
 #endif /* COMMON_DATA_H_ */

@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright [2020-2022] Renesas Electronics Corporation and/or its affiliates.  All Rights Reserved.
+ * Copyright [2020-2023] Renesas Electronics Corporation and/or its affiliates.  All Rights Reserved.
  *
  * This software and documentation are supplied by Renesas Electronics America Inc. and may only be used with products
  * of Renesas Electronics Corp. and its affiliates ("Renesas").  No other uses are authorized.  Renesas products are
@@ -230,9 +230,9 @@ void hw_usb_pmodule_init (uint8_t usb_ip)
             /* Wait for Set of SCKE */
         }
 
- #if defined(USB_HIGH_SPEED_MODULE)
-        USB_M0->PHYSLEW = 0x5;
- #endif                                /* defined (USB_HIGH_SPEED_MODULE) */
+ #if defined(USB_SUPPORT_PHYSLEW)
+        USB_M0->PHYSLEW = USB_PHYSLEW_VALUE;
+ #endif                                /* defined(USB_SUPPORT_PHYSLEW) */
 
         USB_M0->SYSCFG &= (uint16_t) (~USB_DRPD);
 
@@ -260,6 +260,8 @@ void hw_usb_pmodule_init (uint8_t usb_ip)
     else
     {
  #if defined(USB_HIGH_SPEED_MODULE)
+        USB_M1->PHYSET = (USB_DIRPD | USB_PLLRESET | USB_CLKSEL);
+
   #if USB_CFG_CLKSEL == USB_CFG_20MHZ
         USB_M1->PHYSET &= (uint16_t) ~USB_CLKSEL;
         USB_M1->PHYSET |= USB_CLKSEL_20;

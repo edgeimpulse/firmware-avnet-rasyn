@@ -4,8 +4,8 @@ https://www.avnet.com/wps/portal/us/products/avnet-boards/avnet-board-families/r
 
 The firmware is to be used with the [Evaluation kit](https://www.avnet.com/shop/us/products/avnet-engineering-services/aes-rasynb-120-sk-g-3074457345651740186/)
 
-Project generated using FSP 4.2.0.
-The Syntiant SDK in use is v104, which is compatible with model generated with TDK v14.1 or with the Syntiant model converter.
+Project generated using FSP 4.5.0.
+The Syntiant SDK in use is v1v110, which is compatible with model generated with TDK v14.1 or with the Syntiant model converter.
 
 ## Build with docker
 
@@ -24,7 +24,7 @@ The Syntiant SDK in use is v104, which is compatible with model generated with T
     ```
 
 ## SD card content
-The model and the `mcu_fw_120.synpkg` and `dsp_firmware.synpkg` (for SDK v104) should be copied into the SD card.
+The model and the `mcu_fw_120.synpkg` and `dsp_firmware.synpkg` (for SDK v110) should be copied into the SD card.
 There is an additional file which is required to be copied, `config.ini`
 
 ## Model

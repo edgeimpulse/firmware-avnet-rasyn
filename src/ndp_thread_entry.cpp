@@ -38,7 +38,10 @@
 #include "peripheral/usb/usb_pcdc_vcom.h"
 #include "ingestion-sdk-platform/sensor/ei_inertial.h"
 
-#define NDP_TASK_STACK_SIZE_BYTE        32768
+#include "usb_thread_interface.h"
+
+#define NDP_TASK_STACK_SIZE_BYTE        (32768)
+#define NDP_TASK_PRIORITY               (configMAX_PRIORITIES - 4)
 
 /* Private variables -------------------------------------------------------------------- */
 static EiRASyn* pdev;
@@ -54,6 +57,7 @@ typedef struct blink_msg
 
 static void ndp_thread_entry(void *pvParameters);
 static void set_decimation_inshift(void);
+static int bff_reinit_imu(void);
 
 /* Public functions -------------------------------------------------------- */
 /**
@@ -67,7 +71,7 @@ void ndp_thread_start(void)
         (const char*) "NDP Thread",
         NDP_TASK_STACK_SIZE_BYTE / 4, // in words
         NULL, //pvParameters
-        configMAX_PRIORITIES - 1, //uxPriority
+        NDP_TASK_PRIORITY, //uxPriority
         &ndp_thread_handle);
 
     if (retval != pdTRUE) {
@@ -95,6 +99,9 @@ static void ndp_thread_entry(void *pvParameters)
 
 	pdev =  static_cast<EiRASyn*>(EiDeviceInfo::get_device());
 
+    spi_init();
+    init_fatfs();
+
     /* Set BUCK and LDO for NDP120 */
     DA9231_open();
     DA9231_disable();
@@ -105,20 +112,17 @@ static void ndp_thread_entry(void *pvParameters)
 
     ndp_irq_init();
 
-    if (get_print_console_type() == CONSOLE_USB_CDC) {
-        comms_close();
-    }
-
     /* Delay 100 ms */
     ei_sleep(100);
+    /* read config info of ndp firmwares */
+    get_synpkg_config_info();
 
-    if (get_synpkg_boot_mode() == BOOT_MODE_SD)
-    {
+    if (get_synpkg_boot_mode() == BOOT_MODE_SD) {
         ndp_boot_mode = NDP_CORE2_BOOT_MODE_HOST_FILE;
     }
 
     /* Start NDP120 program */
-    ret = ndp_core2_platform_tiny_start(1, 1, ndp_boot_mode);
+    ret = ndp_core2_platform_tiny_start(4, 1, ndp_boot_mode);
     if(ret == 0) {
 #if NDP_DEBUG == 1
         ei_printf("ndp_core2_platform_tiny_start done\r\n");
@@ -137,12 +141,12 @@ static void ndp_thread_entry(void *pvParameters)
 
     }while((!ret) && (--retries));
 
-    if (get_synpkg_boot_mode() != BOOT_MODE_SD) {
+    if (ndp_boot_mode == NDP_CORE2_BOOT_MODE_BOOT_FLASH) {
         // read back info from FLASH
         config_data_in_flash_t flash_data = {0};
 
         if (0 == ndp_flash_read_infos(&flash_data)){
-            mode_circular_motion = flash_data.ndp_mode_motion;
+            set_event_watch_mode (flash_data.watch_mode);
             memcpy(&config_items, &flash_data.cfg, sizeof(struct config_ini_items));
 #if NDP_DEBUG == 1
             ei_printf("read back from FLASH got mode_circular_motion: %s, button_switch: %s\n",
@@ -152,13 +156,14 @@ static void ndp_thread_entry(void *pvParameters)
     }
 
     read_ndp_model();
-    //print_ndp_model();
+    start_usb_pcdc_thread();
 
-	if (motion_running() == CIRCULAR_MOTION_DISABLE) {
+    if (get_event_watch_mode() & WATCH_TYPE_AUDIO) {
         set_decimation_inshift();
 
 	    pdev->set_used_sensor(e_enabled_mic);
-        ret = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_PDM);
+	    ret = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_PDM);
+
         if (ret){
             ei_printf("ndp_core2_platform_tiny_feature_set set 0x%x failed %d\r\n",
             NDP_CORE2_FEATURE_PDM, ret);
@@ -166,6 +171,21 @@ static void ndp_thread_entry(void *pvParameters)
             
     }
     else {
+
+        if (ndp_boot_mode == NDP_CORE2_BOOT_MODE_BOOT_FLASH) {
+            ret = bff_reinit_imu();
+            if (ret) {
+                ei_printf("bff reinit IMU failed: %d\n", ret);
+            }
+        }
+        else {
+            ret = ndp_core2_platform_tiny_dsp_restart();
+            if (ret) {
+                ei_printf("restart DSP failed: %d\n", ret);
+            }
+            vTaskDelay (pdMS_TO_TICKS(1000UL));
+        }
+
         ret = ndp_core2_platform_tiny_sensor_ctl(EI_FUSION_IMU_SENSOR_INDEX, 1);
         if (ret) {
             ei_printf("Enable sensor[%d] icm-42670 failed: %d\n", EI_FUSION_IMU_SENSOR_INDEX, ret);
@@ -179,10 +199,6 @@ static void ndp_thread_entry(void *pvParameters)
 
     /* Enable NDP IRQ */
     ei_run_nn_normal();
-
-    if (get_print_console_type() == CONSOLE_USB_CDC) {
-        comms_open(1);
-    }
 
     memset(&last_stat, 0, sizeof(blink_msg_t));
     memset(&current_stat, 0, sizeof(blink_msg_t));
@@ -301,4 +317,28 @@ static void set_decimation_inshift(void)
     }
 
     ei_printf("\n");
+}
+
+/**
+ *
+ * @return
+ */
+static int bff_reinit_imu(void)
+{
+    int s;
+
+    s = ndp_core2_platfom_tiny_gpio_release(MSPI_IMU_SSB);
+    if (s) {
+        ei_printf("release gpio%d failed: %d\n", MSPI_IMU_SSB, s);
+        return s;
+    }
+
+    s = ndp_core2_platform_tiny_dsp_restart();
+    if (s) {
+        ei_printf("restart DSP failed: %d\n", s);
+        return s;
+    }
+    vTaskDelay (pdMS_TO_TICKS(1000UL));
+
+    return s;
 }

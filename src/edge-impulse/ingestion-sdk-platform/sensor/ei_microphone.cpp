@@ -25,6 +25,7 @@
 #include "ndp/fat_load.h"
 #include "ndp/ndp_irq_service.h"
 #include "inference/ei_run_impulse.h"
+#include "ei_inertial.h"
 
 /* Constant ---------------------------------------------------------------- */
 
@@ -94,12 +95,6 @@ bool ei_microphone_start_sampling(void)
         { { "audio", "wav" } }
     };
 
-    if (motion_running() == CIRCULAR_MOTION_ENABLE) {
-        ei_printf("ERR: error, microphone not available for ingestion\r\n");
-        return false;
-    }
-
-
     ei_printf("Sampling settings:\n");
     ei_printf("\tInterval: ");
     ei_printf_float(dev->get_sample_interval_ms());
@@ -108,6 +103,12 @@ bool ei_microphone_start_sampling(void)
     ei_printf("\tName: %s\n", dev->get_sample_label().c_str());
     ei_printf("\tHMAC Key: %s\n", dev->get_sample_hmac_key().c_str());
     ei_printf("\tFile name: %s\n", dev->get_sample_label().c_str());
+
+    // ingestion not enabled if motion mode
+    if (get_event_watch_mode() & WATCH_TYPE_MOTION) {
+        ei_printf("ERR: error, microphone not available for ingestion\r\n");
+        return false;
+    }
 
     required_samples = (uint32_t)((dev->get_sample_length_ms()) / dev->get_sample_interval_ms());
 
@@ -121,8 +122,6 @@ bool ei_microphone_start_sampling(void)
 
     ei_printf("Starting in 2000 ms... (or until all flash was erased)\n");
     ei_sleep(2000); // no need to erase, we create a new file
-
-
 
     char filename[256];
     int fn_r = snprintf(filename, 256, "mic_%s.cbor", dev->get_sample_label().c_str());
@@ -337,26 +336,60 @@ static int ei_audio_record_operation(int isstart, uint32_t *sample_size)
     if (isstart) {
         if (ei_run_impulse_is_active() == true) {
             ndp_irq_disable();
+        }
 
-            if (motion_running() == CIRCULAR_MOTION_ENABLE) {
-                s = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_PDM);
-                if (s){
-                    ei_printf("ndp_core2_platform_tiny_feature_set set 0x%x failed %d\r\n",
-                        NDP_CORE2_FEATURE_PDM, s);
-                }
+        // enable pdm clk if audio disabled
+        if (!(get_event_watch_mode() & WATCH_TYPE_AUDIO)) {
+            s = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_PDM);
+            if (s){
+                printf("feature set 0x%x failed %d\r\n", NDP_CORE2_FEATURE_PDM, s);
             }
+        }
+
+        // disable sensor for confusion if sensor enabled
+        if (get_event_watch_mode() & WATCH_TYPE_MOTION) {
+            s = ndp_core2_platform_tiny_sensor_ctl(EI_FUSION_IMU_SENSOR_INDEX, 0);
+            if (s) {
+                ei_printf("disable sensor[%d] failed: %d\n", EI_FUSION_IMU_SENSOR_INDEX, s);
+            }
+        }
+
+        s = ndp_core2_platform_tiny_config_interrupts(
+                    NDP_CORE2_INTERRUPT_EXTRACT_READY, 1);
+        if (s) {
+            ei_printf("enable extract interrupt failed: %d\n", s);
         }
     }
     else {
-        if (ei_run_impulse_is_active() == true) {
-            if (motion_running() == CIRCULAR_MOTION_ENABLE) {
-            s = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_NONE);
-                if (s){
-                    ei_printf("ndp_core2_platform_tiny_feature_set set 0x%x failed %d\r\n",
-                                NDP_CORE2_FEATURE_NONE, s);
-                }
-            }
 
+        s = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_NONE);
+        if (s){
+            ei_printf("feature set 0x%x failed %d\r\n", NDP_CORE2_FEATURE_NONE, s);
+        }
+
+        s = ndp_core2_platform_tiny_config_interrupts(
+                    NDP_CORE2_INTERRUPT_EXTRACT_READY, 0);
+        if (s) {
+            ei_printf("disable extract interrupt failed: %d\n", s);
+        }
+
+        // re-enable pdm clock if audio enabled
+        if (get_event_watch_mode() & WATCH_TYPE_AUDIO) {
+            s = ndp_core2_platform_tiny_feature_set(NDP_CORE2_FEATURE_PDM);
+            if (s){
+                ei_printf("feature set 0x%x failed %d\r\n", NDP_CORE2_FEATURE_PDM, s);
+            }
+        }
+
+        // re-enable sensor if sensor enabled
+        if (get_event_watch_mode() & WATCH_TYPE_MOTION) {
+            s = ndp_core2_platform_tiny_sensor_ctl(EI_FUSION_IMU_SENSOR_INDEX, 1);
+            if (s) {
+                ei_printf("enable sensor[%d] failed: %d\n", EI_FUSION_IMU_SENSOR_INDEX, s);
+            }
+        }
+
+        if (ei_run_impulse_is_active() == true) {
             ndp_irq_enable();
         }
     }
@@ -375,12 +408,13 @@ static int ei_audio_record(uint32_t len)
     int s = 0;
     uint32_t sample_size;
     uint32_t sample_bytes = ndp_core2_platform_tiny_get_samplebytes();
+    uint32_t audio_chunk_size;
     uint32_t collected = 0;
 
     /* sample ready interrupt is enabled in MCU firmware */
-    s = ndp_core2_platform_tiny_get_recording_metadata(&sample_size, NDP_CORE2_GET_FROM_MCU);
+    s = ndp_core2_platform_tiny_get_audio_chunk_size(&audio_chunk_size, &sample_size);
     if (s) {
-        ei_printf("audio record get metadata from mcu with notify failed: %d\n", s);
+        ei_printf("audio record get audio chunk size failed: %d\n", s);
         return s;
     }
 

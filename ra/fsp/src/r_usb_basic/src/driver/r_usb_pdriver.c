@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright [2020-2022] Renesas Electronics Corporation and/or its affiliates.  All Rights Reserved.
+ * Copyright [2020-2023] Renesas Electronics Corporation and/or its affiliates.  All Rights Reserved.
  *
  * This software and documentation are supplied by Renesas Electronics America Inc. and may only be used with products
  * of Renesas Electronics Corp. and its affiliates ("Renesas").  No other uses are authorized.  Renesas products are
@@ -511,11 +511,13 @@ static void usb_pstd_interrupt (usb_utr_t * p_mess)
                         {
                             tx_timer_deactivate(&g_usb_otg_detach_timer);
                         }
+
+   #if USB_NUM_USBIP == 2
                         else
                         {
                             tx_timer_deactivate(&g_usb2_otg_detach_timer);
                         }
-
+   #endif                              /* USB_NUM_USBIP == 2 */
                         _ux_system_otg->ux_system_otg_device_type = UX_OTG_DEVICE_A;
                         (*g_p_otg_callback[p_mess->ip])(UX_OTG_MODE_HOST);
                     }
@@ -2259,7 +2261,7 @@ void usb_peri_detach (usb_utr_t * ptr, uint16_t usb_state, uint16_t data2)
          * before doing the warm start.                                                             */
         if (USB_DEFAULT == usb_state)
         {
-            for (pipe = USB_MIN_PIPE_NO; pipe < (USB_MAXPIPE_NUM + 1); pipe++)
+            for (pipe = USB_MIN_PIPE_NO; pipe < (USB_MAX_PIPE_NO + 1); pipe++)
             {
                 g_usb_peri_usbx_is_detach[pipe] = USB_NO;
                 tx_semaphore_put(&g_usb_peri_usbx_sem[pipe]);

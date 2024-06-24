@@ -113,8 +113,9 @@ void usb_composite_callback(usb_event_info_t * event, usb_hdl_t handle, usb_onof
                 {
                     g_control_line_state.bdtr = (unsigned char)((event->setup.request_value >> 0) & 0x01);
                     g_control_line_state.brts = (unsigned char)((event->setup.request_value >> 1) & 0x01);
-                    g_comms_opened_flag = 1;
+
                     g_usb_on_usb.periControlStatusSet(&g_basic_ctrl, USB_SETUP_STATUS_ACK);
+                    xSemaphoreGiveFromISR(g_usb_ready, &xHigherPriorityTaskWoken);
                 }
 
             }
@@ -146,27 +147,21 @@ fsp_err_t comms_open(uint8_t wait)
     fsp_err_t err;
 
     err = g_usb_on_usb.open(&g_basic_ctrl, &g_basic_cfg);
-    if (FSP_SUCCESS != err)
-    {
+
+    if (FSP_SUCCESS != err) {
         return (err);
     }
 
-    if (wait)
-    {
+    if (wait) {
         /* Wait for the application to open the COM port */
-        while (0 == g_control_line_state.bdtr)
-        {
-            vTaskDelay(1);
-        }
-
-        if (pdTRUE == xSemaphoreGive(g_usb_ready))
-        {
-            __NOP();
+        if ( xSemaphoreTake(g_usb_ready, portMAX_DELAY) == pdFALSE) {
+            return FSP_ERR_ABORTED;
         }
 
         g_comms_opened_flag = 1;
         vTaskDelay (500);
     }
+
     return FSP_SUCCESS;
 }
 
@@ -178,7 +173,7 @@ fsp_err_t comms_send(uint8_t * p_src, uint32_t len, uint32_t period)
     uint32_t len1 = 0;
 
     if (0 == g_comms_opened_flag)
-        return FSP_ERR_BLE_INIT_FAILED;
+        return FSP_ERR_USB_NOT_OPEN;
 
 #if 1
     //if (len <= USB_DATA_LEN)

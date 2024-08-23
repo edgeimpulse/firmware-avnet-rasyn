@@ -36,7 +36,7 @@ ei_dsp_named_axis_t ei_dsp_config_4_named_axes[] = {
 };
 size_t ei_dsp_config_4_named_axes_size = 1;
 uint8_t ei_dsp_config_4_axes[] = { 0 };
-const uint32_t ei_dsp_config_4_axes_size = 1;
+const uint8_t ei_dsp_config_4_axes_size = 1;
 ei_dsp_config_audio_syntiant_t ei_dsp_config_4 = {
     4, // uint32_t blockId
     1, // int implementationVersion

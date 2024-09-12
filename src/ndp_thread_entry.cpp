@@ -270,13 +270,13 @@ static void set_decimation_inshift(void)
     ndp_core2_platform_tiny_audio_config_get(INSHIFT_AUDIO_ID, INSHIFT_DUAL_MIC_ID, 0, &decimation_inshift_mic1_read_value);
 
     ei_printf("    Decimation Inshift Details\n");
-    ei_printf("    Model Decimation Inshift Mic0: %d\n", decimation_inshift_mic0_read_value);
-    ei_printf("    Model Decimation Inshift Mic1: %d\n", decimation_inshift_mic1_read_value);
+    ei_printf("    Model Decimation Inshift Mic0: %d\n", (int8_t)decimation_inshift_mic0_read_value);
+    ei_printf("    Model Decimation Inshift Mic1: %d\n", (int8_t)decimation_inshift_mic1_read_value);
 
     // Check the configuration
     if(decimation_inshift_value_mic0 != DEC_INSHIFT_VALUE_DEFAULT){
 
-        ei_printf("DECIMATION_INSHIFT_VALUE     : %d\n", decimation_inshift_value_mic0);
+        ei_printf("DECIMATION_INSHIFT_VALUE     : %d\n", (int8_t)decimation_inshift_value_mic0);
         decimation_inshift_calculated_value = decimation_inshift_value_mic0;
 
     }
@@ -296,7 +296,7 @@ static void set_decimation_inshift(void)
         decimation_inshift_calculated_value = DEC_INSHIFT_VALUE_MIN;
     }
 
-    // Check for invalid low value
+    // Check for invalid high value
     else if(decimation_inshift_calculated_value > DEC_INSHIFT_VALUE_MAX){
 
         ei_printf("Warning calculated value %d is above max allowed value of %d\n", decimation_inshift_calculated_value, DEC_INSHIFT_VALUE_MAX);
